@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 5e6fbd9684f308a43bf47d93bac4c210
+timeCreated: 1487958056
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - turtle: {instanceID: 0}
+  - trunk: {fileID: 1000012591111850, guid: 23c03ece3b6825743b43f092624d07b1, type: 2}
+  - green: {instanceID: 0}
+  - red: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
