@@ -5,13 +5,15 @@ using System.Collections.Generic;
 
 public class Interpreter : MonoBehaviour
 {
-
-    // public string interSting;//move to private
     public GameObject turtle;
-    public GameObject trunk;
+    public GameObject line;
 
+    private int needsCorrecting = 0;
     private float angle = 90;
     private string inter;
+    private string tempInter;
+    private string rightCorrecter;
+    private string leftCorrecter;
 
     private static Stack<Vector3> thePosStack = new Stack<Vector3>();
     private static Stack<Quaternion> theRotStack = new Stack<Quaternion>();
@@ -20,23 +22,23 @@ public class Interpreter : MonoBehaviour
 
     void Start()
     {
-        StreamReader sr = new StreamReader("dragon.txt");
-        inter = sr.ReadLine();
-        //iterations = int.Parse(sr.ReadLine());
-        //stochY = bool.Parse(sr.ReadLine());
-        //stochX = bool.Parse(sr.ReadLine());
-        //stochF = bool.Parse(sr.ReadLine());
-        //ruleX = sr.ReadLine();
-        //ruleF = sr.ReadLine();
-        //ruleY = sr.ReadLine();
-        //ruleBO = sr.ReadLine();
-        //ruleBC = sr.ReadLine();
-        //ruleN = sr.ReadLine();
-        //ruleP = sr.ReadLine();
-        //forceSetAngle(float.Parse(sr.ReadLine()));
+        StreamReader rules = new StreamReader("dragon.txt");
+        inter = rules.ReadLine();
         Debug.Log(inter);
-        sr.Close();
+        rules.Close();
 
+        StreamReader correcter1 = new StreamReader("left.txt");
+        leftCorrecter = correcter1.ReadLine();
+        Debug.Log(leftCorrecter);
+        correcter1.Close();
+
+        StreamReader correcter2 = new StreamReader("right.txt");
+        rightCorrecter = correcter2.ReadLine();
+        Debug.Log(rightCorrecter);
+        correcter2.Close();
+
+        //tempInter = tempInter.Replace(tempInter, inter);
+        Debug.Log(tempInter);
         centerTurtle();
     }
 
@@ -48,14 +50,17 @@ public class Interpreter : MonoBehaviour
             mainLoop();
         }
 
-        //if reset key pressed 
-        //if (Input.GetKeyDown("r"))
-        //{
-        //    //delet all trunks 
-        //    foreach (GameObject T in GameObject.FindGameObjectsWithTag("Player"))
-        //    { Destroy(T); }
+        //if reset key pressed
+        if (Input.GetKeyDown("r"))
+        {
+            needsCorrecting = 1;
+            stringCorrecter();
+            //mainLoop();
+            //delet all trunks 
+            //foreach (GameObject T in GameObject.FindGameObjectsWithTag("Player"))
+            //{ Destroy(T); }
 
-        //}
+        }
     }
     private void centerTurtle()
     {
@@ -74,7 +79,6 @@ public class Interpreter : MonoBehaviour
 
                 case 'f':
                 case 'F':
-                    print("forward");
                     F2D();
                     break;
                 case '[':
@@ -84,12 +88,10 @@ public class Interpreter : MonoBehaviour
                     OffStack();
                     break;
                 case '+':
-                    print("turn +");
                     PTree();
                     break;
                 case '-':
                 case '?':
-                    print("turn -");
                     NTree();
                     break;
                 default:
@@ -99,11 +101,38 @@ public class Interpreter : MonoBehaviour
         }
     }
 
+    private void stringCorrecter()
+    {
+        if (needsCorrecting == 1)
+        {
+            inter = inter.Replace(inter, leftCorrecter);
+            Debug.Log(inter);
+            needsCorrecting = 0;
+            mainLoop();
+
+            inter = inter.Replace(inter, "fff");
+        }
+        if (needsCorrecting == 2)
+        {
+            inter = inter.Replace(inter, rightCorrecter);
+            Debug.Log(inter);
+            needsCorrecting = 0;
+            mainLoop();
+
+            inter = inter.Replace(inter, "fff");
+        }
+        //if (needsCorrecting == 0)
+        //{
+        //    inter = inter.Replace(inter, tempInter);
+        //    Debug.Log(inter);
+        //}
+    }
+
 
     private void F2D()
     {
         //create trunk at turtles location and rotation
-        Instantiate(trunk, turtle.transform.position, turtle.transform.rotation);
+        Instantiate(line, turtle.transform.position, turtle.transform.rotation);
         //move turtle forward
         turtle.transform.Translate(Vector3.up);
     }
@@ -111,14 +140,12 @@ public class Interpreter : MonoBehaviour
     private void PTree()
     {
         //angle right with slight varience 
-        // float tempAngle = Random.Range(angle - 5, angle + 5);
         turtle.transform.Rotate(new Vector3(0.0f, 0.0f, angle));
     }
 
     private void NTree()
     {
         //angle left with slight varience
-        //float tempAngle = Random.Range(angle - 5, angle + 5);
         turtle.transform.Rotate(new Vector3(0.0f, 0.0f, -angle));
     }
 
