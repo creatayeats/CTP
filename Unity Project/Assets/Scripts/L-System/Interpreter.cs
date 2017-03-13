@@ -19,7 +19,9 @@ public class Interpreter : MonoBehaviour
     private static Stack<Vector3> thePosStack = new Stack<Vector3>();
     private static Stack<Quaternion> theRotStack = new Stack<Quaternion>();
 
-    //private IEnumerator coroutine;
+    //Set outer boundaries for system
+    //Not allow it to place on itself
+    //Needs to block between pieces
 
     void Start()
     {
