@@ -32,6 +32,7 @@ public class Grid : MonoBehaviour {
 	private Dictionary<PieceType, GameObject> piecePrefabDict;
 
 	private GamePiece[,] pieces;
+    private PNoiseColour pNoise;
 
 	private bool inverse = false;
 
@@ -40,7 +41,8 @@ public class Grid : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		piecePrefabDict = new Dictionary<PieceType, GameObject> ();
+
+        piecePrefabDict = new Dictionary<PieceType, GameObject> ();
 
 		for (int i = 0; i < piecePrefabs.Length; i++)
         {
@@ -68,28 +70,44 @@ public class Grid : MonoBehaviour {
 			}
 		}
 
-		Destroy (pieces [1, 5].gameObject);
-		SpawnNewPiece (1, 5, PieceType.BUBBLE);
+        //Instantiate Perlin Noise Coordinates by casting
+        pNoise = GetComponent<PNoiseColour>();
 
-		Destroy (pieces [2, 3].gameObject);
-		SpawnNewPiece (2, 3, PieceType.BUBBLE);
+        //Casting breaks spawning!
+        //int coord1X = (int)Mathf.Ceil(pNoise.coord1.x);
+        //int coord1Y = (int)Mathf.Ceil(pNoise.coord1.y);
+        //int coord2X = (int)Mathf.Ceil(pNoise.coord2.x);
+        //int coord2Y = (int)Mathf.Ceil(pNoise.coord2.y);
+        //int coord3X = (int)Mathf.Ceil(pNoise.coord3.x);
+        //int coord3Y = (int)Mathf.Ceil(pNoise.coord3.y);
+        //int coord4X = (int)Mathf.Ceil(pNoise.coord4.x);
+        //int coord4Y = (int)Mathf.Ceil(pNoise.coord4.y);
+        //int coord5X = (int)Mathf.Ceil(pNoise.coord5.x);
+        //int coord5Y = (int)Mathf.Ceil(pNoise.coord5.y);
 
-		Destroy (pieces [3, 5].gameObject);
-		SpawnNewPiece (3, 5, PieceType.BUBBLE);
+        Destroy(pieces[2, 3].gameObject);
+        SpawnNewPiece(2, 3, PieceType.BUBBLE);
 
-		Destroy (pieces [2, 2].gameObject);
-		SpawnNewPiece (2, 2, PieceType.RAINBOW);
+        //Casting attempt
+        //Destroy(pieces[coord1X, coord1Y].gameObject);
+        //SpawnNewPiece(coord1X, coord1Y, PieceType.BUBBLE);
 
-		Destroy (pieces [5, 5].gameObject);
-		SpawnNewPiece (5, 5, PieceType.BUBBLE);
+        Destroy(pieces[3, 5].gameObject);
+        SpawnNewPiece(3, 5, PieceType.BUBBLE);
 
-		Destroy (pieces [6, 3].gameObject);
-		SpawnNewPiece (6, 3, PieceType.BUBBLE);
+        Destroy(pieces[2, 2].gameObject);
+        SpawnNewPiece(2, 2, PieceType.RAINBOW);
 
-		Destroy (pieces [7, 5].gameObject);
-		SpawnNewPiece (7, 5, PieceType.BUBBLE);
+        Destroy(pieces[5, 5].gameObject);
+        SpawnNewPiece(5, 5, PieceType.BUBBLE);
 
-		StartCoroutine(Fill ());
+        Destroy(pieces[6, 3].gameObject);
+        SpawnNewPiece(6, 3, PieceType.BUBBLE);
+
+        Destroy(pieces[7, 5].gameObject);
+        SpawnNewPiece(7, 5, PieceType.BUBBLE);
+
+        StartCoroutine(Fill ());
 	}
 
 	public IEnumerator Fill()
