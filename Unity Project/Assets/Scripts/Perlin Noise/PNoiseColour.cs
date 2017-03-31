@@ -3,7 +3,10 @@ using System.Collections;
 
 public class PNoiseColour : MonoBehaviour {
 
-    public int size = 9;
+    //Variables to use for takinf instantiated grid size
+    private int sizeX;
+    private int sizeY;
+    private int size2D;
 
     //Coord values to be used on grid
     public Vector2 coord1;
@@ -12,23 +15,35 @@ public class PNoiseColour : MonoBehaviour {
     public Vector2 coord4;
     public Vector2 coord5;
 
-    public float scale;
-    public bool move = false;
+    //PN Variables
+    private float scale;
+    private bool move = false;
 
+    //Arrays for storing and ordering height
     private float[,] coordinates;
     private float[] heightValues;
 
+    //Object and class references
     public GameObject cube;
+    private GameObject gridRef;
+    private Grid grid;
 
     void Start()
     {
-        //counters
+        //Instiate array size by pulling set grid values
+        GameObject gridRef = GameObject.Find("Grid");
+        Grid grid = gridRef.GetComponent<Grid>();
+        sizeX = grid.xDim;
+        sizeY = grid.yDim;
+        size2D = sizeX * sizeY;
+
+        //Counters
         int z = 0;
         int w = 0;
 
         //Two arrays, one for sorting and one for placing inside 2D array
-        coordinates = new float[9, 9];
-        heightValues = new float[82];
+        coordinates = new float[sizeX, sizeY];
+        heightValues = new float[size2D + 1];
 
         //Randomise colour scale on start
         //Change for different results in PN
@@ -36,9 +51,9 @@ public class PNoiseColour : MonoBehaviour {
 
         //Spawn grid of cubes
         //Assign each cube a coordinate
-        for (int x = 0; x < size; x++)
+        for (int x = 0; x < sizeX; x++)
         {
-            for (int y = 0; y < size; y++)
+            for (int y = 0; y < sizeY; y++)
             {
                 (Instantiate(cube, new Vector3(x, 0, y), Quaternion.identity) as GameObject).transform.parent = transform;
             }
@@ -56,9 +71,9 @@ public class PNoiseColour : MonoBehaviour {
         }
 
         //Give height values a coordinate by placing in 2D array
-        for (int a = 0; a < size; a++)
+        for (int a = 0; a < sizeX; a++)
         {
-            for (int b = 0; b < size; b++)
+            for (int b = 0; b < sizeY; b++)
             {
                 coordinates[a, b] = heightValues[w];
                 w++;          
@@ -67,7 +82,7 @@ public class PNoiseColour : MonoBehaviour {
 
         //Test print to specify the coordinate and height value of that particular slot
         //Coordinates are set to the slot in the array
-        Debug.Log(coordinates[2, 8]);
+        //Debug.Log(coordinates[2, 8]);
 
         //Bubble sort of height values from closest to 0 -> 1;
         float temp = 0;
@@ -93,39 +108,39 @@ public class PNoiseColour : MonoBehaviour {
         //Compare the sorted list to the unsorted list for highest point coordinates
         //Need to make less messy! List perhaps?
         //Coords tend to replicate as some hight values are the same
-        for (int c = 0; c < size; c++)
+        for (int c = 0; c < sizeX; c++)
         {
-            for (int d = 0; d < size; d++)
+            for (int d = 0; d < sizeY; d++)
             {
-                //80 holds largest item
-                if (coordinates[c, d] == heightValues[80])
+                //End of the array holds the largest item
+                if (coordinates[c, d] == heightValues[size2D - 1])
                 {
                     coord1.x = c;
                     coord1.y = d;
                     print(coord1);
                 }
 
-                if (coordinates[c, d] == heightValues[79])
+                if (coordinates[c, d] == heightValues[size2D - 2])
                 {
                     coord2.x = c;
                     coord2.y = d;
                     print(coord2);
                 }
 
-                if (coordinates[c, d] == heightValues[78])
+                if (coordinates[c, d] == heightValues[size2D - 3])
                 {
                     coord3.x = c;
                     coord3.y = d;
                     print(coord3);
                 }
-                if (coordinates[c, d] == heightValues[77])
+                if (coordinates[c, d] == heightValues[size2D - 4])
                 {
                     coord4.x = c;
                     coord4.y = d;
                     print(coord4);
                 }
 
-                if (coordinates[c, d] == heightValues[76])
+                if (coordinates[c, d] == heightValues[size2D - 5])
                 {
                     coord5.x = c;
                     coord5.y = d;
@@ -135,7 +150,6 @@ public class PNoiseColour : MonoBehaviour {
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
         float height;
