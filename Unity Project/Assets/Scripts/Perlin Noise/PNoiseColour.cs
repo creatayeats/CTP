@@ -17,7 +17,7 @@ public class PNoiseColour : MonoBehaviour {
 
     //PN Variables
     private float scale;
-    private bool move = false;
+    public bool move = false;
 
     //Arrays for storing and ordering height
     private float[,] coordinates;

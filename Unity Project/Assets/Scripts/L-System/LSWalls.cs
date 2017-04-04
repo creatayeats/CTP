@@ -93,28 +93,47 @@ public class LSWalls : MonoBehaviour
 
     private void StringCorrecter()
     {
-        //Select the next path at random
-        int path = Random.Range(1, 5);
-
-        //Set path depending on value
-        //Rotate 180 degrees (for correction on boundary mostly
-        if (path == 1 || needsCorrecting)
+        Boundary();
+        //Rotate 180 degrees (for correction on boundary mostly)
+        if (needsCorrecting)
         {
-            rulesString = rulesString.Replace(rulesString, "f++");
-            Debug.Log(rulesString);
-            path = 0;
-            CoreLoop();
-
-            //If a boundry was hit, double up forward after backing up
-            if (needsCorrecting)
+            if (rulesString == "f-")
             {
-                //if the path needs correcting
-                rulesString = rulesString.Replace(rulesString, "ff");
+                rulesString = rulesString.Replace(rulesString, "-f");
+                Debug.Log(rulesString);
                 needsCorrecting = false;
+                CoreLoop();
+            }
+            if (rulesString == "f+")
+            {
+                rulesString = rulesString.Replace(rulesString, "+f");
+                Debug.Log(rulesString);
+                needsCorrecting = false;
+                CoreLoop();
+            }
+            if (rulesString == "f")
+            {
+                rulesString = rulesString.Replace(rulesString, "++f");
+                Debug.Log(rulesString);
+                needsCorrecting = false;
+                CoreLoop();
             }
         }
+
+        //Select the next path at random
+        int path = Random.Range(1, 4);
+
+        //Set path depending on value
+        //if (path == 1)
+        //{
+        //    rulesString = rulesString.Replace(rulesString, "f++");
+        //    Debug.Log(rulesString);
+        //    path = 0;
+        //    CoreLoop();
+        //}
         //Right 90 degrees
-        if (path == 2)
+
+        if (path == 1)
         {
             rulesString = rulesString.Replace(rulesString, "f+");
             Debug.Log(rulesString);
@@ -122,7 +141,7 @@ public class LSWalls : MonoBehaviour
             CoreLoop();
         }
         //Left 90 degrees
-        if (path == 3)
+        if (path == 2)
         {
             rulesString = rulesString.Replace(rulesString, "f-");
             Debug.Log(rulesString);
@@ -130,9 +149,9 @@ public class LSWalls : MonoBehaviour
             CoreLoop();
         }
         //Double up forward
-        if (path == 4)
+        if (path == 3)
         {
-            rulesString = rulesString.Replace(rulesString, "ff");
+            rulesString = rulesString.Replace(rulesString, "f");
             Debug.Log(rulesString);
             path = 0;
             CoreLoop();
@@ -147,6 +166,7 @@ public class LSWalls : MonoBehaviour
         lineSpawner.transform.Translate(Vector3.up);
 
         //boundaryCheck(clone);
+        //Boundary(clone);
         DestroyEnds(clone);
     }
 
@@ -163,12 +183,17 @@ public class LSWalls : MonoBehaviour
     }
 
     //Not working
-    void OnTriggerEnter2D(Collider2D col)
+    void Boundary(/*GameObject clone*/)
     {
-        if (col.gameObject.tag == "Boundary")
+        if ((lineSpawner.transform.position.x >= 3.4) || (lineSpawner.transform.position.x <= -3.4))
         {
+            print("Needs Correcting");
             needsCorrecting = true;
-            print("Correcting..");
+        }
+        if ((lineSpawner.transform.position.y >= 3.4) || (lineSpawner.transform.position.y <= -3.4))
+        {
+            print("Needs Correcting");
+            needsCorrecting = true;
         }
     }
 
