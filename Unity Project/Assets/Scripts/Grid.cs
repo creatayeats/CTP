@@ -24,31 +24,47 @@ public class Grid : MonoBehaviour
         public GameObject prefab;
     };
 
+    //Grid dimensions and grid fill variables
     public int xDim;
     public int yDim;
     public float fillTime;
 
+    //Game board prefabs
     public PiecePrefab[] piecePrefabs;
     public GameObject backgroundPrefab;
-    public GameObject matchingLight;
     public GameObject[] matchLightDelete;
+    public GameObject matchingLight;
 
+    //Container for prefabs and their types
     private Dictionary<PieceType, GameObject> piecePrefabDict;
 
+    //Current game piece arrays
     private GamePiece[,] pieces;
 
+    //Perlin Noise script references
     private PNoiseColour pNoise;
     private GameObject pNoiseRef;
 
     private bool inverse = false;
 
+    //Mouse-on-game piece activity
     private GamePiece pressedPiece;
     private GamePiece enteredPiece;
+
+    //Search variables
+    private bool bredthFirst;
+    private bool depthFirst;
+    private int movesMade;
 
     //Use this for initialization
     void Start()
     {
+        //Instantiate search
+        bredthFirst = false;
+        bredthFirst = false;
+        movesMade = 0;
 
+        //Instantiate prefabs and their types
         piecePrefabDict = new Dictionary<PieceType, GameObject>();
 
         for (int i = 0; i < piecePrefabs.Length; i++)
@@ -59,6 +75,7 @@ public class Grid : MonoBehaviour
             }
         }
 
+        //Instantiate grid
         for (int x = 0; x < xDim; x++)
         {
             for (int y = 0; y < yDim; y++)
@@ -68,6 +85,7 @@ public class Grid : MonoBehaviour
             }
         }
 
+        //Instantiate game pieces (as empty)
         pieces = new GamePiece[xDim, yDim];
         for (int x = 0; x < xDim; x++)
         {
@@ -111,11 +129,46 @@ public class Grid : MonoBehaviour
         Destroy(pieces[coord5X, coord5Y].gameObject);
         SpawnNewPiece(coord5X, coord5Y, PieceType.BUBBLE);
 
-        //Standard spawning
+        //Standard spawning procedure
         //Destroy(pieces[7, 5].gameObject);
         //SpawnNewPiece(7, 5, PieceType.BUBBLE);
 
         StartCoroutine(Fill());
+    }
+
+    void Update()
+    {
+        //Activate searches on SPACEBAR on NUMPAD ENTER key
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            bredthFirst = true;
+        }
+        if (Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            depthFirst = true;
+        }
+
+        //Search all current matches trigger
+        if (bredthFirst)
+        {
+            SearchMatchesBredth();
+            bredthFirst = false;
+        }
+        if (depthFirst)
+        {
+            SearchMatchesDepth();
+            depthFirst = false;
+        }
+
+        //Slow down time while the swaps are current
+        if (depthFirst || bredthFirst)
+        {
+            Time.timeScale = 0.1f;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+        }
     }
 
     public IEnumerator Fill()
@@ -134,15 +187,13 @@ public class Grid : MonoBehaviour
 
             needsRefill = ClearAllValidMatches();
         }
-        //Refresh Search light
+        //Refresh current valid search lights
         matchLightDelete = GameObject.FindGameObjectsWithTag("Light");
 
         for (int i = 0; i < matchLightDelete.Length; i++)
         {
             Destroy(matchLightDelete[i]);
         }
-
-        //SearchMatches();
     }
 
     public bool FillStep()
@@ -270,45 +321,51 @@ public class Grid : MonoBehaviour
         return (piece1.X == piece2.X && (int)Mathf.Abs(piece1.Y - piece2.Y) == 1) || (piece1.Y == piece2.Y && (int)Mathf.Abs(piece1.X - piece2.X) == 1);
     }
 
-    //Array goes out of range and breaks the game
-    //Search gives weird results
-    //public void SearchMatches()
-    //{
-    //    GamePiece piece1;
-    //    GamePiece piece2;
+    //Bredth dirst search on SPACE
+    public void SearchMatchesBredth()
+    {
+        {
+            GamePiece piece1;
+            GamePiece piece2;
 
-    //    for (int x = 0; x < xDim; x++)
-    //    {
-    //        for (int y = 0; y < yDim; y++)
-    //        {
-    //            //Piece 1
-    //            piece1 = pieces[x, y];
-    //            piece2 = pieces[x + 1, y];
+            for (int x = 0; x < xDim; x++)
+            {
+                for (int y = 0; y < yDim; y++)
+                {
+                    //Piece 1
+                    if (x < xDim && x + 1 < xDim)
+                    {
+                        piece1 = pieces[x, y];
+                        piece2 = pieces[x + 1, y];
+                        SwapPieces(piece1, piece2);
+                    }
+                }
+            }
+        }
+        Debug.Log(movesMade);
+    }
 
-    //            if (piece1.IsMovable() && piece2.IsMovable())
-    //            {
-    //                pieces[piece1.X, piece1.Y] = piece2;
-    //                pieces[piece2.X, piece2.Y] = piece1;
+    //Depth first search on NUMPAD ENTER
+    public void SearchMatchesDepth()
+    {
+        GamePiece piece1;
+        GamePiece piece2;
 
-    //                //Matching Piece search function
-    //                GetMatch(piece1, piece2.X, piece2.Y);
-    //                GetMatch(piece2, piece1.X, piece1.Y);
-    //            }
-
-    //            piece2 = pieces[x, y + 1];
-
-    //            if (piece1.IsMovable() && piece2.IsMovable())
-    //            {
-    //                pieces[piece1.X, piece1.Y] = piece2;
-    //                pieces[piece2.X, piece2.Y] = piece1;
-
-    //                //Matching Piece search function
-    //                GetMatch(piece1, piece2.X, piece2.Y);
-    //                GetMatch(piece2, piece1.X, piece1.Y);
-    //            }
-    //        }
-    //    }
-    //}
+        for (int y = 0; y < yDim; y++)
+        {
+            for (int x = 0; x < xDim; x++)
+            {
+                //Piece 1
+                if (y < yDim && y + 1 < yDim)
+                {
+                    piece1 = pieces[x, y];
+                    piece2 = pieces[x, y + 1];
+                    SwapPieces(piece1, piece2);
+                }
+            }
+        }
+        Debug.Log(movesMade);
+    }
 
     public void SwapPieces(GamePiece piece1, GamePiece piece2)
     {
@@ -317,7 +374,7 @@ public class Grid : MonoBehaviour
             pieces[piece1.X, piece1.Y] = piece2;
             pieces[piece2.X, piece2.Y] = piece1;
 
-            //Matching Piece search function
+            //Core matching piece search function
             if (GetMatch(piece1, piece2.X, piece2.Y) != null || GetMatch(piece2, piece1.X, piece1.Y) != null
                 || piece1.Type == PieceType.RAINBOW || piece2.Type == PieceType.RAINBOW)
             {
@@ -700,7 +757,6 @@ public class Grid : MonoBehaviour
 
             return true;
         }
-
         return false;
     }
 
