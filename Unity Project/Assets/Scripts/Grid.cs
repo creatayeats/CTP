@@ -13,7 +13,6 @@ public class Grid : MonoBehaviour
         ROW_CLEAR,
         COLUMN_CLEAR,
         RAINBOW,
-        WALL,
         COUNT,
     };
 

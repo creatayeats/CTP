@@ -1,40 +1,56 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class MovablePiece : MonoBehaviour {
+public class MovablePiece : MonoBehaviour
+{
 
-	private GamePiece piece;
-	private IEnumerator moveCoroutine;
+    private GamePiece piece;
+    private IEnumerator moveCoroutine;
+    private bool movable;
 
-	void Awake() {
-		piece = GetComponent<GamePiece> ();
-	}
+    void Awake()
+    {
+        movable = true;
+        piece = GetComponent<GamePiece>();
+    }
 
-	public void Move(int newX, int newY, float time)
-	{
-		if (moveCoroutine != null)
+    public void Move(int newX, int newY, float time)
+    {
+        if (movable)
         {
-			StopCoroutine (moveCoroutine);
-		}
+            if (moveCoroutine != null)
+            {
+                StopCoroutine(moveCoroutine);
+            }
 
-		moveCoroutine = MoveCoroutine (newX, newY, time);
-		StartCoroutine (moveCoroutine);
-	}
+            moveCoroutine = MoveCoroutine(newX, newY, time);
+            StartCoroutine(moveCoroutine);
+        }
+    }
 
-	public IEnumerator MoveCoroutine(int newX, int newY, float time)
-	{
-		piece.X = newX;
-		piece.Y = newY;
+    public IEnumerator MoveCoroutine(int newX, int newY, float time)
+    {
+        piece.X = newX;
+        piece.Y = newY;
 
-		Vector3 startPos = transform.position;
-		Vector3 endPos = piece.GridRef.GetWorldPosition (newX, newY);
+        Vector3 startPos = transform.position;
+        Vector3 endPos = piece.GridRef.GetWorldPosition(newX, newY);
 
-		for (float t = 0; t <= 1 * time; t += Time.deltaTime)
+        for (float t = 0; t <= 1 * time; t += Time.deltaTime)
         {
-			piece.transform.position = Vector3.Lerp (startPos, endPos, t / time);
-			yield return 0;
-		}
+            piece.transform.position = Vector3.Lerp(startPos, endPos, t / time);
+            yield return 0;
+        }
 
-		piece.transform.position = piece.GridRef.GetWorldPosition (newX, newY);
-	}
+        piece.transform.position = piece.GridRef.GetWorldPosition(newX, newY);
+    }
+
+    void OnTriggerStay(Collider coll)
+    {
+        if (coll.gameObject.tag == "Line")
+        {
+            movable = false;
+            print("not movable");
+        }
+    }
 }
