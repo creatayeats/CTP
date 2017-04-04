@@ -13,7 +13,11 @@ public class LSWalls : MonoBehaviour
     private float angle = 90.0f;
     private float lifetime = 5.0f;
 
-    //private float boundary = 5.0f;
+    //Variables to use for taking instantiated grid size
+    private int sizeX;
+    private int sizeY;
+    private float sizeHalfX;
+    private float sizeHalfY;
 
     //Stopwatch variables so items spawn at a set rate
     private float stopwatch;
@@ -25,14 +29,21 @@ public class LSWalls : MonoBehaviour
     //Use to stop wall replication
     private bool needsCorrecting;
 
-    private static Stack<Vector3> thePosStack = new Stack<Vector3>();
-    private static Stack<Quaternion> theRotStack = new Stack<Quaternion>();
+    //Object and class references
+    private GameObject gridRef;
+    private Grid grid;
 
-    //Set outer boundaries for system
     //Needs to block between pieces
 
     void Start()
     {
+        GameObject gridRef = GameObject.Find("Grid");
+        Grid grid = gridRef.GetComponent<Grid>();
+        sizeX = grid.xDim;
+        sizeY = grid.yDim;
+        sizeHalfX = sizeX / 2;
+        sizeHalfY = sizeY / 2;
+
         needsCorrecting = false;
 
         //Initial prefab placement
@@ -71,12 +82,6 @@ public class LSWalls : MonoBehaviour
                 case 'F':
                     PlaceForward();
                     break;
-                //case '[':
-                //    OnStack();
-                //    break;
-                //case ']':
-                //    OffStack();
-                //    break;
                 case '+':
                     PosTurn();
                     break;
@@ -94,7 +99,7 @@ public class LSWalls : MonoBehaviour
     private void StringCorrecter()
     {
         Boundary();
-        //Rotate 180 degrees (for correction on boundary mostly)
+        //Rotate back x degrees depending on current string (for correction on boundary mostly)
         if (needsCorrecting)
         {
             if (rulesString == "f-")
@@ -123,16 +128,7 @@ public class LSWalls : MonoBehaviour
         //Select the next path at random
         int path = Random.Range(1, 4);
 
-        //Set path depending on value
-        //if (path == 1)
-        //{
-        //    rulesString = rulesString.Replace(rulesString, "f++");
-        //    Debug.Log(rulesString);
-        //    path = 0;
-        //    CoreLoop();
-        //}
         //Right 90 degrees
-
         if (path == 1)
         {
             rulesString = rulesString.Replace(rulesString, "f+");
@@ -185,12 +181,12 @@ public class LSWalls : MonoBehaviour
     //Not working
     void Boundary(/*GameObject clone*/)
     {
-        if ((lineSpawner.transform.position.x >= 3.4) || (lineSpawner.transform.position.x <= -3.4))
+        if ((lineSpawner.transform.position.x >= sizeHalfX - 0.1) || (lineSpawner.transform.position.x <= -sizeHalfX + 0.1))
         {
             print("Needs Correcting");
             needsCorrecting = true;
         }
-        if ((lineSpawner.transform.position.y >= 3.4) || (lineSpawner.transform.position.y <= -3.4))
+        if ((lineSpawner.transform.position.y >= sizeHalfY - 0.1) || (lineSpawner.transform.position.y <= -sizeHalfY + 0.1))
         {
             print("Needs Correcting");
             needsCorrecting = true;
@@ -202,23 +198,6 @@ public class LSWalls : MonoBehaviour
         //Destroy wall after set lifetime
         Destroy(clone, lifetime);
     }
-
-    //private void OnStack()
-    //{ //place turtles position into the position stack
-    //    Vector3 tempPos = turtle.transform.position;
-    //    thePosStack.Push(tempPos);
-    //    //place turtles rotation into the rotation stack
-    //    Quaternion tempRot = turtle.transform.rotation;
-    //    theRotStack.Push(tempRot);
-    //}
-
-    //private void OffStack()
-    //{
-    //    // move turtle to position on top of stack
-    //    turtle.transform.position = thePosStack.Pop();
-    //    //rotate turtle to rotation on stack
-    //    turtle.transform.rotation = theRotStack.Pop();
-    //}
 }
 
 

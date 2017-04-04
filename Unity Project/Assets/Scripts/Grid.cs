@@ -12,6 +12,7 @@ public class Grid : MonoBehaviour {
 		ROW_CLEAR,
 		COLUMN_CLEAR,
 		RAINBOW,
+        WALL,
 		COUNT,
 	};
 
@@ -41,7 +42,7 @@ public class Grid : MonoBehaviour {
 	private GamePiece pressedPiece;
 	private GamePiece enteredPiece;
 
-	// Use this for initialization
+	//Use this for initialization
 	void Start () {
 
         piecePrefabDict = new Dictionary<PieceType, GameObject> ();
@@ -88,9 +89,6 @@ public class Grid : MonoBehaviour {
         int coord4Y = (int)Mathf.Ceil(pNoise.coord4.y);
         int coord5X = (int)Mathf.Ceil(pNoise.coord5.x);
         int coord5Y = (int)Mathf.Ceil(pNoise.coord5.y);
-
-        //Destroy(pieces[2, 3].gameObject);
-        //SpawnNewPiece(2, 3, PieceType.BUBBLE);
 
         //Casting attempt
         Destroy(pieces[coord1X, coord1Y].gameObject);
@@ -347,11 +345,11 @@ public class Grid : MonoBehaviour {
 		if (piece.IsColoured ())
         {
 			ColourPiece.ColourType colour = piece.ColourComponent.Colour;
-			List<GamePiece> horizontalPieces = new List<GamePiece> ();
-			List<GamePiece> verticalPieces = new List<GamePiece> ();
-			List<GamePiece> matchingPieces = new List<GamePiece> ();
+			List<GamePiece> horizontalPieces = new List<GamePiece>();
+			List<GamePiece> verticalPieces = new List<GamePiece>();
+			List<GamePiece> matchingPieces = new List<GamePiece>();
 
-			// First check horizontal
+			//First check horizontal
 			horizontalPieces.Add(piece);
 
 			for (int dir = 0; dir <= 1; dir++)
@@ -361,11 +359,11 @@ public class Grid : MonoBehaviour {
 					int x;
 
 					if (dir == 0)
-                    { // Left
+                    { //Left
 						x = newX - xOffset;
 					}
                     else
-                    { // Right
+                    { //Right
 						x = newX + xOffset;
 					}
 
@@ -393,7 +391,7 @@ public class Grid : MonoBehaviour {
 				}
 			}
 
-			// Traverse vertically if we found a match (for L and T shapes)
+			//Traverse vertically if we found a match (for L and T shapes)
 			if (horizontalPieces.Count >= 3)
             {
 				for (int i = 0; i < horizontalPieces.Count; i++)
@@ -405,11 +403,11 @@ public class Grid : MonoBehaviour {
 							int y;
 
 							if (dir == 0)
-                            { // Up
+                            { //Up
 								y = newY - yOffset;
 							}
                             else
-                            { // Down
+                            { //Down
 								y = newY + yOffset;
 							}
 
@@ -450,8 +448,8 @@ public class Grid : MonoBehaviour {
 				return matchingPieces;
 			}
 
-			// Didn't find anything going horizontally first,
-			// so now check vertically
+			//Didn't find anything going horizontally first,
+			//so now check vertically
 			horizontalPieces.Clear();
 			verticalPieces.Clear ();
 			verticalPieces.Add(piece);
@@ -463,11 +461,11 @@ public class Grid : MonoBehaviour {
 					int y;
 
 					if (dir == 0)
-                    { // Up
+                    { //Up
 						y = newY - yOffset;
 					}
                     else
-                    { // Down
+                    { //Down
 						y = newY + yOffset;
 					}
 
@@ -495,7 +493,7 @@ public class Grid : MonoBehaviour {
 				}
 			}
 
-			// Traverse horizontally if we found a match (for L and T shapes)
+			//Traverse horizontally if we found a match (for L and T shapes)
 			if (verticalPieces.Count >= 3)
             {
 				for (int i = 0; i < verticalPieces.Count; i++)
@@ -507,10 +505,10 @@ public class Grid : MonoBehaviour {
 							int x;
 
 							if (dir == 0)
-                            { // Left
+                            { //Left
 								x = newX - xOffset;
 							} else
-                            { // Right
+                            { //Right
 								x = newX + xOffset;
 							}
 

@@ -64,9 +64,9 @@ public class GamePiece : MonoBehaviour {
 
 	void Awake()
 	{
-		movableComponent = GetComponent<MovablePiece> ();
-		colourComponent = GetComponent<ColourPiece> ();
-		clearableComponent = GetComponent<ClearablePiece> ();
+		movableComponent = GetComponent<MovablePiece>();
+		colourComponent = GetComponent<ColourPiece>();
+		clearableComponent = GetComponent<ClearablePiece>();
 	}
 
 	public void Init(int _x, int _y, Grid _grid, Grid.PieceType _type)

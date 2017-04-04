@@ -3,7 +3,7 @@ using System.Collections;
 
 public class PNoiseColour : MonoBehaviour {
 
-    //Variables to use for takinf instantiated grid size
+    //Variables to use for taking instantiated grid size
     private int sizeX;
     private int sizeY;
     private int size2D;
