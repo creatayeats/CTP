@@ -37,6 +37,7 @@ public class LSWalls : MonoBehaviour
 
     void Start()
     {
+        //Instiate array size by pulling set grid values
         GameObject gridRef = GameObject.Find("Grid");
         Grid grid = gridRef.GetComponent<Grid>();
         sizeX = grid.xDim;
@@ -44,11 +45,11 @@ public class LSWalls : MonoBehaviour
         sizeHalfX = sizeX / 2;
         sizeHalfY = sizeY / 2;
 
+        //Instantiate correction bool
         needsCorrecting = false;
 
         //Initial prefab placement
         rulesString = "f";
-        Debug.Log(rulesString);
 
         SpawningSpawner();
     }
@@ -105,21 +106,21 @@ public class LSWalls : MonoBehaviour
             if (rulesString == "f-")
             {
                 rulesString = rulesString.Replace(rulesString, "-f");
-                Debug.Log(rulesString);
+                //Debug.Log(rulesString);
                 needsCorrecting = false;
                 CoreLoop();
             }
             if (rulesString == "f+")
             {
                 rulesString = rulesString.Replace(rulesString, "+f");
-                Debug.Log(rulesString);
+                //Debug.Log(rulesString);
                 needsCorrecting = false;
                 CoreLoop();
             }
             if (rulesString == "f")
             {
                 rulesString = rulesString.Replace(rulesString, "++f");
-                Debug.Log(rulesString);
+                //Debug.Log(rulesString);
                 needsCorrecting = false;
                 CoreLoop();
             }
@@ -132,7 +133,7 @@ public class LSWalls : MonoBehaviour
         if (path == 1)
         {
             rulesString = rulesString.Replace(rulesString, "f+");
-            Debug.Log(rulesString);
+            //Debug.Log(rulesString);
             path = 0;
             CoreLoop();
         }
@@ -140,7 +141,7 @@ public class LSWalls : MonoBehaviour
         if (path == 2)
         {
             rulesString = rulesString.Replace(rulesString, "f-");
-            Debug.Log(rulesString);
+            //Debug.Log(rulesString);
             path = 0;
             CoreLoop();
         }
@@ -148,7 +149,7 @@ public class LSWalls : MonoBehaviour
         if (path == 3)
         {
             rulesString = rulesString.Replace(rulesString, "f");
-            Debug.Log(rulesString);
+            //Debug.Log(rulesString);
             path = 0;
             CoreLoop();
         }
@@ -178,17 +179,17 @@ public class LSWalls : MonoBehaviour
         lineSpawner.transform.Rotate(new Vector3(0.0f, 0.0f, -angle));
     }
 
-    //Not working
-    void Boundary(/*GameObject clone*/)
+    void Boundary()
     {
+        //Check to see if the spawner is hitting the grid boundary
         if ((lineSpawner.transform.position.x >= sizeHalfX - 0.1) || (lineSpawner.transform.position.x <= -sizeHalfX + 0.1))
         {
-            print("Needs Correcting");
+            //print("Needs Correcting");
             needsCorrecting = true;
         }
         if ((lineSpawner.transform.position.y >= sizeHalfY - 0.1) || (lineSpawner.transform.position.y <= -sizeHalfY + 0.1))
         {
-            print("Needs Correcting");
+            //print("Needs Correcting");
             needsCorrecting = true;
         }
     }

@@ -97,6 +97,7 @@ public class Grid : MonoBehaviour {
         Destroy(pieces[coord2X, coord2Y].gameObject);
         SpawnNewPiece(coord2X, coord2Y, PieceType.BUBBLE);
 
+        //Spawn a rainbow piece for testing purposes
         Destroy(pieces[coord3X, coord3Y].gameObject);
         SpawnNewPiece(coord3X, coord3Y, PieceType.RAINBOW);
 
@@ -253,14 +254,14 @@ public class Grid : MonoBehaviour {
 
 	public bool IsAdjacent(GamePiece piece1, GamePiece piece2)
 	{
-		return (piece1.X == piece2.X && (int)Mathf.Abs (piece1.Y - piece2.Y) == 1) || (piece1.Y == piece2.Y && (int)Mathf.Abs (piece1.X - piece2.X) == 1);
+        return (piece1.X == piece2.X && (int)Mathf.Abs (piece1.Y - piece2.Y) == 1) || (piece1.Y == piece2.Y && (int)Mathf.Abs (piece1.X - piece2.X) == 1);
 	}
 
 	public void SwapPieces(GamePiece piece1, GamePiece piece2)
 	{
 		if (piece1.IsMovable () && piece2.IsMovable ())
         {
-			pieces [piece1.X, piece1.Y] = piece2;
+            pieces [piece1.X, piece1.Y] = piece2;
 			pieces [piece2.X, piece2.Y] = piece1;
 
 			if (GetMatch (piece1, piece2.X, piece2.Y) != null || GetMatch (piece2, piece1.X, piece1.Y) != null
@@ -344,7 +345,7 @@ public class Grid : MonoBehaviour {
 	{
 		if (piece.IsColoured ())
         {
-			ColourPiece.ColourType colour = piece.ColourComponent.Colour;
+            ColourPiece.ColourType colour = piece.ColourComponent.Colour;
 			List<GamePiece> horizontalPieces = new List<GamePiece>();
 			List<GamePiece> verticalPieces = new List<GamePiece>();
 			List<GamePiece> matchingPieces = new List<GamePiece>();
@@ -375,7 +376,9 @@ public class Grid : MonoBehaviour {
 					if (pieces [x, newY].IsColoured () && pieces [x, newY].ColourComponent.Colour == colour)
                     {
 						horizontalPieces.Add (pieces [x, newY]);
-					}
+                        //Debug.Log(pieces[x, newY]);
+                        //Debug.Log(newY);
+                    }
                     else
                     {
 						break;
@@ -388,7 +391,9 @@ public class Grid : MonoBehaviour {
 				for (int i = 0; i < horizontalPieces.Count; i++)
                 {
 					matchingPieces.Add (horizontalPieces [i]);
-				}
+                    //print("Is Movable");
+                    //Debug.Log(matchingPieces);
+                }
 			}
 
 			//Traverse vertically if we found a match (for L and T shapes)
@@ -419,7 +424,7 @@ public class Grid : MonoBehaviour {
 							if (pieces [horizontalPieces [i].X, y].IsColoured () && pieces [horizontalPieces [i].X, y].ColourComponent.Colour == colour)
                             {
 								verticalPieces.Add (pieces [horizontalPieces [i].X, y]);
-							}
+                            }
                             else
                             {
 								break;
@@ -436,7 +441,9 @@ public class Grid : MonoBehaviour {
 						for (int j = 0; j < verticalPieces.Count; j++)
                         {
 							matchingPieces.Add (verticalPieces [j]);
-						}
+                            //print("Is Movable");
+                            //Debug.Log(matchingPieces);
+                        }
 
 						break;
 					}
@@ -477,7 +484,7 @@ public class Grid : MonoBehaviour {
 					if (pieces [newX, y].IsColoured () && pieces [newX, y].ColourComponent.Colour == colour)
                     {
 						verticalPieces.Add (pieces [newX, y]);
-					}
+                    }
                     else
                     {
 						break;
@@ -490,7 +497,9 @@ public class Grid : MonoBehaviour {
 				for (int i = 0; i < verticalPieces.Count; i++)
                 {
 					matchingPieces.Add (verticalPieces [i]);
-				}
+                    //print("Is Movable");
+                    //Debug.Log(matchingPieces);
+                }
 			}
 
 			//Traverse horizontally if we found a match (for L and T shapes)
@@ -520,7 +529,8 @@ public class Grid : MonoBehaviour {
 							if (pieces [x, verticalPieces[i].Y].IsColoured () && pieces [x, verticalPieces[i].Y].ColourComponent.Colour == colour)
                             {
 								horizontalPieces.Add (pieces [x, verticalPieces[i].Y]);
-							} else
+							}
+                            else
                             {
 								break;
 							}
@@ -536,7 +546,9 @@ public class Grid : MonoBehaviour {
 						for (int j = 0; j < horizontalPieces.Count; j++)
                         {
 							matchingPieces.Add (horizontalPieces [j]);
-						}
+                            //print("Is Movable");
+                            //Debug.Log(matchingPieces);
+                        }
 
 						break;
 					}
