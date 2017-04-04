@@ -89,7 +89,7 @@ public class GamePiece : MonoBehaviour {
 
 	void OnMouseUp()
 	{
-		grid.ReleasePiece ();
+		grid.ReleasePiece();
 	}
 
 	public bool IsMovable()

@@ -2,76 +2,80 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Grid : MonoBehaviour {
+public class Grid : MonoBehaviour
+{
 
-	public enum PieceType
-	{
-		EMPTY,
-		NORMAL,
-		BUBBLE,
-		ROW_CLEAR,
-		COLUMN_CLEAR,
-		RAINBOW,
+    public enum PieceType
+    {
+        EMPTY,
+        NORMAL,
+        BUBBLE,
+        ROW_CLEAR,
+        COLUMN_CLEAR,
+        RAINBOW,
         WALL,
-		COUNT,
-	};
+        COUNT,
+    };
 
-	[System.Serializable]
-	public struct PiecePrefab
-	{
-		public PieceType type;
-		public GameObject prefab;
-	};
+    [System.Serializable]
+    public struct PiecePrefab
+    {
+        public PieceType type;
+        public GameObject prefab;
+    };
 
-	public int xDim;
-	public int yDim;
-	public float fillTime;
+    public int xDim;
+    public int yDim;
+    public float fillTime;
 
-	public PiecePrefab[] piecePrefabs;
-	public GameObject backgroundPrefab;
+    public PiecePrefab[] piecePrefabs;
+    public GameObject backgroundPrefab;
+    public GameObject matchingLight;
+    public GameObject[] matchLightDelete;
 
-	private Dictionary<PieceType, GameObject> piecePrefabDict;
+    private Dictionary<PieceType, GameObject> piecePrefabDict;
 
-	private GamePiece[,] pieces;
+    private GamePiece[,] pieces;
 
     private PNoiseColour pNoise;
     private GameObject pNoiseRef;
 
-	private bool inverse = false;
+    private bool inverse = false;
 
-	private GamePiece pressedPiece;
-	private GamePiece enteredPiece;
+    private GamePiece pressedPiece;
+    private GamePiece enteredPiece;
 
-	//Use this for initialization
-	void Start () {
+    //Use this for initialization
+    void Start()
+    {
 
-        piecePrefabDict = new Dictionary<PieceType, GameObject> ();
+        piecePrefabDict = new Dictionary<PieceType, GameObject>();
 
-		for (int i = 0; i < piecePrefabs.Length; i++)
+        for (int i = 0; i < piecePrefabs.Length; i++)
         {
-			if (!piecePrefabDict.ContainsKey (piecePrefabs [i].type))
+            if (!piecePrefabDict.ContainsKey(piecePrefabs[i].type))
             {
-				piecePrefabDict.Add (piecePrefabs [i].type, piecePrefabs [i].prefab);
-			}
-		}
+                piecePrefabDict.Add(piecePrefabs[i].type, piecePrefabs[i].prefab);
+            }
+        }
 
-		for (int x = 0; x < xDim; x++)
+        for (int x = 0; x < xDim; x++)
         {
-			for (int y = 0; y < yDim; y++)
+            for (int y = 0; y < yDim; y++)
             {
-				GameObject background = (GameObject)Instantiate (backgroundPrefab, GetWorldPosition(x, y), Quaternion.identity);
-				background.transform.parent = transform;
-			}
-		}
+                GameObject background = (GameObject)Instantiate(backgroundPrefab, GetWorldPosition(x, y), Quaternion.identity);
+                background.transform.parent = transform;
+            }
+        }
 
-		pieces = new GamePiece[xDim, yDim];
-		for (int x = 0; x < xDim; x++)
+        pieces = new GamePiece[xDim, yDim];
+        for (int x = 0; x < xDim; x++)
         {
-			for (int y = 0; y < yDim; y++)
+            for (int y = 0; y < yDim; y++)
             {
-				SpawnNewPiece (x, y, PieceType.EMPTY);
-			}
-		}
+                SpawnNewPiece(x, y, PieceType.EMPTY);
+            }
+        }
 
         //Instantiate Perlin Noise Coordinates by casting
         GameObject pNoiseRef = GameObject.Find("PNSpawner");
@@ -111,605 +115,650 @@ public class Grid : MonoBehaviour {
         //Destroy(pieces[7, 5].gameObject);
         //SpawnNewPiece(7, 5, PieceType.BUBBLE);
 
-        StartCoroutine(Fill ());
-	}
+        StartCoroutine(Fill());
+    }
 
-	public IEnumerator Fill()
-	{
-		bool needsRefill = true;
+    public IEnumerator Fill()
+    {
+        bool needsRefill = true;
 
-		while (needsRefill)
+        while (needsRefill)
         {
-			yield return new WaitForSeconds (fillTime);
+            yield return new WaitForSeconds(fillTime);
 
-			while (FillStep ())
+            while (FillStep())
             {
-				inverse = !inverse;
-				yield return new WaitForSeconds (fillTime);
-			}
+                inverse = !inverse;
+                yield return new WaitForSeconds(fillTime);
+            }
 
-			needsRefill = ClearAllValidMatches ();
-		}
-	}
+            needsRefill = ClearAllValidMatches();
+        }
+        //Refresh Search light
+        matchLightDelete = GameObject.FindGameObjectsWithTag("Light");
 
-	public bool FillStep()
-	{
-		bool movedPiece = false;
-
-		for (int y = yDim-2; y >= 0; y--)
-		{
-			for (int loopX = 0; loopX < xDim; loopX++)
-			{
-				int x = loopX;
-
-				if (inverse)
-                {
-					x = xDim - 1 - loopX;
-				}
-
-				GamePiece piece = pieces [x, y];
-
-				if (piece.IsMovable ())
-				{
-					GamePiece pieceBelow = pieces [x, y + 1];
-
-					if (pieceBelow.Type == PieceType.EMPTY)
-                    {
-						Destroy (pieceBelow.gameObject);
-						piece.MovableComponent.Move (x, y + 1, fillTime);
-						pieces [x, y + 1] = piece;
-						SpawnNewPiece (x, y, PieceType.EMPTY);
-						movedPiece = true;
-					}
-                    else
-                    {
-						for (int diag = -1; diag <= 1; diag++)
-						{
-							if (diag != 0)
-							{
-								int diagX = x + diag;
-
-								if (inverse)
-								{
-									diagX = x - diag;
-								}
-
-								if (diagX >= 0 && diagX < xDim)
-								{
-									GamePiece diagonalPiece = pieces [diagX, y + 1];
-
-									if (diagonalPiece.Type == PieceType.EMPTY)
-									{
-										bool hasPieceAbove = true;
-
-										for (int aboveY = y; aboveY >= 0; aboveY--)
-										{
-											GamePiece pieceAbove = pieces [diagX, aboveY];
-
-											if (pieceAbove.IsMovable ())
-											{
-												break;
-											}
-											else if(!pieceAbove.IsMovable() && pieceAbove.Type != PieceType.EMPTY)
-											{
-												hasPieceAbove = false;
-												break;
-											}
-										}
-
-										if (!hasPieceAbove)
-										{
-											Destroy (diagonalPiece.gameObject);
-											piece.MovableComponent.Move (diagX, y + 1, fillTime);
-											pieces [diagX, y + 1] = piece;
-											SpawnNewPiece (x, y, PieceType.EMPTY);
-											movedPiece = true;
-											break;
-										}
-									} 
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		for (int x = 0; x < xDim; x++)
-		{
-			GamePiece pieceBelow = pieces [x, 0];
-
-			if (pieceBelow.Type == PieceType.EMPTY)
-			{
-				Destroy (pieceBelow.gameObject);
-				GameObject newPiece = (GameObject)Instantiate(piecePrefabDict[PieceType.NORMAL], GetWorldPosition(x, -1), Quaternion.identity);
-				newPiece.transform.parent = transform;
-
-				pieces [x, 0] = newPiece.GetComponent<GamePiece> ();
-				pieces [x, 0].Init (x, -1, this, PieceType.NORMAL);
-				pieces [x, 0].MovableComponent.Move (x, 0, fillTime);
-				pieces [x, 0].ColourComponent.SetColour ((ColourPiece.ColourType)Random.Range (0, pieces [x, 0].ColourComponent.NumColours));
-				movedPiece = true;
-			}
-		}
-
-		return movedPiece;
-	}
-
-	public Vector2 GetWorldPosition(int x, int y)
-	{
-		return new Vector2 (transform.position.x - xDim / 2.0f + x, transform.position.y + yDim / 2.0f - y);
-	}
-
-	public GamePiece SpawnNewPiece(int x, int y, PieceType type)
-	{
-		GameObject newPiece = (GameObject)Instantiate (piecePrefabDict [type], GetWorldPosition (x, y), Quaternion.identity);
-		newPiece.transform.parent = transform;
-
-		pieces [x, y] = newPiece.GetComponent<GamePiece> ();
-		pieces [x, y].Init (x, y, this, type);
-
-		return pieces [x, y];
-	}
-
-	public bool IsAdjacent(GamePiece piece1, GamePiece piece2)
-	{
-        return (piece1.X == piece2.X && (int)Mathf.Abs (piece1.Y - piece2.Y) == 1) || (piece1.Y == piece2.Y && (int)Mathf.Abs (piece1.X - piece2.X) == 1);
-	}
-
-	public void SwapPieces(GamePiece piece1, GamePiece piece2)
-	{
-		if (piece1.IsMovable () && piece2.IsMovable ())
+        for (int i = 0; i < matchLightDelete.Length; i++)
         {
-            pieces [piece1.X, piece1.Y] = piece2;
-			pieces [piece2.X, piece2.Y] = piece1;
+            Destroy(matchLightDelete[i]);
+        }
 
-			if (GetMatch (piece1, piece2.X, piece2.Y) != null || GetMatch (piece2, piece1.X, piece1.Y) != null
-				|| piece1.Type == PieceType.RAINBOW || piece2.Type == PieceType.RAINBOW)
-            {
+        //SearchMatches();
+    }
 
-				int piece1X = piece1.X;
-				int piece1Y = piece1.Y;
+    public bool FillStep()
+    {
+        bool movedPiece = false;
 
-				piece1.MovableComponent.Move (piece2.X, piece2.Y, fillTime);
-				piece2.MovableComponent.Move (piece1X, piece1Y, fillTime);
-
-				if (piece1.Type == PieceType.RAINBOW && piece1.IsClearable () && piece2.IsColoured ())
-                {
-					ClearColourPiece clearColour = piece1.GetComponent<ClearColourPiece> ();
-
-					if (clearColour)
-                    {
-						clearColour.Colour = piece2.ColourComponent.Colour;
-					}
-
-					ClearPiece (piece1.X, piece1.Y);
-				}
-
-				if (piece2.Type == PieceType.RAINBOW && piece2.IsClearable () && piece1.IsColoured ())
-                {
-					ClearColourPiece clearColour = piece2.GetComponent<ClearColourPiece> ();
-
-					if (clearColour)
-                    {
-						clearColour.Colour = piece1.ColourComponent.Colour;
-					}
-
-					ClearPiece (piece2.X, piece2.Y);
-				}
-
-				ClearAllValidMatches ();
-
-				if (piece1.Type == PieceType.ROW_CLEAR || piece1.Type == PieceType.COLUMN_CLEAR)
-                {
-					ClearPiece (piece1.X, piece1.Y);
-				}
-
-				if (piece2.Type == PieceType.ROW_CLEAR || piece2.Type == PieceType.COLUMN_CLEAR)
-                {
-					ClearPiece (piece2.X, piece2.Y);
-				}
-
-				pressedPiece = null;
-				enteredPiece = null;
-
-				StartCoroutine (Fill ());
-			}
-            else
-            {
-				pieces [piece1.X, piece1.Y] = piece1;
-				pieces [piece2.X, piece2.Y] = piece2;
-			}
-		}
-	}
-
-	public void PressPiece(GamePiece piece)
-	{
-		pressedPiece = piece;
-	}
-
-	public void EnterPiece(GamePiece piece)
-	{
-		enteredPiece = piece;
-	}
-
-	public void ReleasePiece()
-	{
-		if (IsAdjacent (pressedPiece, enteredPiece))
+        for (int y = yDim - 2; y >= 0; y--)
         {
-			SwapPieces (pressedPiece, enteredPiece);
-		}
-	}
-
-	public List<GamePiece> GetMatch(GamePiece piece, int newX, int newY)
-	{
-		if (piece.IsColoured ())
-        {
-            ColourPiece.ColourType colour = piece.ColourComponent.Colour;
-			List<GamePiece> horizontalPieces = new List<GamePiece>();
-			List<GamePiece> verticalPieces = new List<GamePiece>();
-			List<GamePiece> matchingPieces = new List<GamePiece>();
-
-			//First check horizontal
-			horizontalPieces.Add(piece);
-
-			for (int dir = 0; dir <= 1; dir++)
+            for (int loopX = 0; loopX < xDim; loopX++)
             {
-				for (int xOffset = 1; xOffset < xDim; xOffset++)
+                int x = loopX;
+
+                if (inverse)
                 {
-					int x;
+                    x = xDim - 1 - loopX;
+                }
 
-					if (dir == 0)
-                    { //Left
-						x = newX - xOffset;
-					}
-                    else
-                    { //Right
-						x = newX + xOffset;
-					}
+                GamePiece piece = pieces[x, y];
 
-					if (x < 0 || x >= xDim)
+                if (piece.IsMovable())
+                {
+                    GamePiece pieceBelow = pieces[x, y + 1];
+
+                    if (pieceBelow.Type == PieceType.EMPTY)
                     {
-						break;
-					}
-
-					if (pieces [x, newY].IsColoured () && pieces [x, newY].ColourComponent.Colour == colour)
-                    {
-						horizontalPieces.Add (pieces [x, newY]);
-                        //Debug.Log(pieces[x, newY]);
-                        //Debug.Log(newY);
+                        Destroy(pieceBelow.gameObject);
+                        piece.MovableComponent.Move(x, y + 1, fillTime);
+                        pieces[x, y + 1] = piece;
+                        SpawnNewPiece(x, y, PieceType.EMPTY);
+                        movedPiece = true;
                     }
                     else
                     {
-						break;
-					}
-				}
-			}
-
-			if (horizontalPieces.Count >= 3)
-            {
-				for (int i = 0; i < horizontalPieces.Count; i++)
-                {
-					matchingPieces.Add (horizontalPieces [i]);
-                    //print("Is Movable");
-                    //Debug.Log(matchingPieces);
-                }
-			}
-
-			//Traverse vertically if we found a match (for L and T shapes)
-			if (horizontalPieces.Count >= 3)
-            {
-				for (int i = 0; i < horizontalPieces.Count; i++)
-                {
-					for (int dir = 0; dir <= 1; dir++)
-                    {
-						for (int yOffset = 1; yOffset < yDim; yOffset++)
+                        for (int diag = -1; diag <= 1; diag++)
                         {
-							int y;
+                            if (diag != 0)
+                            {
+                                int diagX = x + diag;
 
-							if (dir == 0)
+                                if (inverse)
+                                {
+                                    diagX = x - diag;
+                                }
+
+                                if (diagX >= 0 && diagX < xDim)
+                                {
+                                    GamePiece diagonalPiece = pieces[diagX, y + 1];
+
+                                    if (diagonalPiece.Type == PieceType.EMPTY)
+                                    {
+                                        bool hasPieceAbove = true;
+
+                                        for (int aboveY = y; aboveY >= 0; aboveY--)
+                                        {
+                                            GamePiece pieceAbove = pieces[diagX, aboveY];
+
+                                            if (pieceAbove.IsMovable())
+                                            {
+                                                break;
+                                            }
+                                            else if (!pieceAbove.IsMovable() && pieceAbove.Type != PieceType.EMPTY)
+                                            {
+                                                hasPieceAbove = false;
+                                                break;
+                                            }
+                                        }
+
+                                        if (!hasPieceAbove)
+                                        {
+                                            Destroy(diagonalPiece.gameObject);
+                                            piece.MovableComponent.Move(diagX, y + 1, fillTime);
+                                            pieces[diagX, y + 1] = piece;
+                                            SpawnNewPiece(x, y, PieceType.EMPTY);
+                                            movedPiece = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int x = 0; x < xDim; x++)
+        {
+            GamePiece pieceBelow = pieces[x, 0];
+
+            if (pieceBelow.Type == PieceType.EMPTY)
+            {
+                Destroy(pieceBelow.gameObject);
+                GameObject newPiece = (GameObject)Instantiate(piecePrefabDict[PieceType.NORMAL], GetWorldPosition(x, -1), Quaternion.identity);
+                newPiece.transform.parent = transform;
+
+                pieces[x, 0] = newPiece.GetComponent<GamePiece>();
+                pieces[x, 0].Init(x, -1, this, PieceType.NORMAL);
+                pieces[x, 0].MovableComponent.Move(x, 0, fillTime);
+                pieces[x, 0].ColourComponent.SetColour((ColourPiece.ColourType)Random.Range(0, pieces[x, 0].ColourComponent.NumColours));
+                movedPiece = true;
+            }
+        }
+
+        return movedPiece;
+    }
+
+    public Vector2 GetWorldPosition(int x, int y)
+    {
+        return new Vector2(transform.position.x - xDim / 2.0f + x, transform.position.y + yDim / 2.0f - y);
+    }
+
+    public GamePiece SpawnNewPiece(int x, int y, PieceType type)
+    {
+        GameObject newPiece = (GameObject)Instantiate(piecePrefabDict[type], GetWorldPosition(x, y), Quaternion.identity);
+        newPiece.transform.parent = transform;
+
+        pieces[x, y] = newPiece.GetComponent<GamePiece>();
+        pieces[x, y].Init(x, y, this, type);
+
+        return pieces[x, y];
+    }
+
+    public bool IsAdjacent(GamePiece piece1, GamePiece piece2)
+    {
+        return (piece1.X == piece2.X && (int)Mathf.Abs(piece1.Y - piece2.Y) == 1) || (piece1.Y == piece2.Y && (int)Mathf.Abs(piece1.X - piece2.X) == 1);
+    }
+
+    //Array goes out of range and breaks the game
+    //Search gives weird results
+    //public void SearchMatches()
+    //{
+    //    GamePiece piece1;
+    //    GamePiece piece2;
+
+    //    for (int x = 0; x < xDim; x++)
+    //    {
+    //        for (int y = 0; y < yDim; y++)
+    //        {
+    //            //Piece 1
+    //            piece1 = pieces[x, y];
+    //            piece2 = pieces[x + 1, y];
+
+    //            if (piece1.IsMovable() && piece2.IsMovable())
+    //            {
+    //                pieces[piece1.X, piece1.Y] = piece2;
+    //                pieces[piece2.X, piece2.Y] = piece1;
+
+    //                //Matching Piece search function
+    //                GetMatch(piece1, piece2.X, piece2.Y);
+    //                GetMatch(piece2, piece1.X, piece1.Y);
+    //            }
+
+    //            piece2 = pieces[x, y + 1];
+
+    //            if (piece1.IsMovable() && piece2.IsMovable())
+    //            {
+    //                pieces[piece1.X, piece1.Y] = piece2;
+    //                pieces[piece2.X, piece2.Y] = piece1;
+
+    //                //Matching Piece search function
+    //                GetMatch(piece1, piece2.X, piece2.Y);
+    //                GetMatch(piece2, piece1.X, piece1.Y);
+    //            }
+    //        }
+    //    }
+    //}
+
+    public void SwapPieces(GamePiece piece1, GamePiece piece2)
+    {
+        if (piece1.IsMovable() && piece2.IsMovable())
+        {
+            pieces[piece1.X, piece1.Y] = piece2;
+            pieces[piece2.X, piece2.Y] = piece1;
+
+            //Matching Piece search function
+            if (GetMatch(piece1, piece2.X, piece2.Y) != null || GetMatch(piece2, piece1.X, piece1.Y) != null
+                || piece1.Type == PieceType.RAINBOW || piece2.Type == PieceType.RAINBOW)
+            {
+
+                int piece1X = piece1.X;
+                int piece1Y = piece1.Y;
+
+                piece1.MovableComponent.Move(piece2.X, piece2.Y, fillTime);
+                piece2.MovableComponent.Move(piece1X, piece1Y, fillTime);
+
+                if (piece1.Type == PieceType.RAINBOW && piece1.IsClearable() && piece2.IsColoured())
+                {
+                    ClearColourPiece clearColour = piece1.GetComponent<ClearColourPiece>();
+
+                    if (clearColour)
+                    {
+                        clearColour.Colour = piece2.ColourComponent.Colour;
+                    }
+
+                    ClearPiece(piece1.X, piece1.Y);
+                }
+
+                if (piece2.Type == PieceType.RAINBOW && piece2.IsClearable() && piece1.IsColoured())
+                {
+                    ClearColourPiece clearColour = piece2.GetComponent<ClearColourPiece>();
+
+                    if (clearColour)
+                    {
+                        clearColour.Colour = piece1.ColourComponent.Colour;
+                    }
+
+                    ClearPiece(piece2.X, piece2.Y);
+                }
+
+                ClearAllValidMatches();
+
+                if (piece1.Type == PieceType.ROW_CLEAR || piece1.Type == PieceType.COLUMN_CLEAR)
+                {
+                    ClearPiece(piece1.X, piece1.Y);
+                }
+
+                if (piece2.Type == PieceType.ROW_CLEAR || piece2.Type == PieceType.COLUMN_CLEAR)
+                {
+                    ClearPiece(piece2.X, piece2.Y);
+                }
+
+                pressedPiece = null;
+                enteredPiece = null;
+
+                StartCoroutine(Fill());
+            }
+            else
+            {
+                pieces[piece1.X, piece1.Y] = piece1;
+                pieces[piece2.X, piece2.Y] = piece2;
+            }
+        }
+    }
+
+    public void PressPiece(GamePiece piece)
+    {
+        pressedPiece = piece;
+    }
+
+    public void EnterPiece(GamePiece piece)
+    {
+        enteredPiece = piece;
+    }
+
+    public void ReleasePiece()
+    {
+        if (IsAdjacent(pressedPiece, enteredPiece))
+        {
+            SwapPieces(pressedPiece, enteredPiece);
+        }
+    }
+
+    public List<GamePiece> GetMatch(GamePiece piece, int newX, int newY)
+    {
+        if (piece.IsColoured())
+        {
+            ColourPiece.ColourType colour = piece.ColourComponent.Colour;
+            List<GamePiece> horizontalPieces = new List<GamePiece>();
+            List<GamePiece> verticalPieces = new List<GamePiece>();
+            List<GamePiece> matchingPieces = new List<GamePiece>();
+
+            //First check horizontal
+            horizontalPieces.Add(piece);
+
+            for (int dir = 0; dir <= 1; dir++)
+            {
+                for (int xOffset = 1; xOffset < xDim; xOffset++)
+                {
+                    int x;
+
+                    if (dir == 0)
+                    { //Left
+                        x = newX - xOffset;
+                    }
+                    else
+                    { //Right
+                        x = newX + xOffset;
+                    }
+
+                    if (x < 0 || x >= xDim)
+                    {
+                        break;
+                    }
+
+                    if (pieces[x, newY].IsColoured() && pieces[x, newY].ColourComponent.Colour == colour)
+                    {
+                        horizontalPieces.Add(pieces[x, newY]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (horizontalPieces.Count >= 3)
+            {
+                for (int i = 0; i < horizontalPieces.Count; i++)
+                {
+                    matchingPieces.Add(horizontalPieces[i]);
+                    //Spawn a light in the corner of matching pieces
+                    GameObject matchLight = (GameObject)Instantiate(matchingLight, horizontalPieces[i].transform.position, horizontalPieces[i].transform.rotation);
+                }
+            }
+
+            //Traverse vertically if we found a match (for L and T shapes)
+            if (horizontalPieces.Count >= 3)
+            {
+                for (int i = 0; i < horizontalPieces.Count; i++)
+                {
+                    for (int dir = 0; dir <= 1; dir++)
+                    {
+                        for (int yOffset = 1; yOffset < yDim; yOffset++)
+                        {
+                            int y;
+
+                            if (dir == 0)
                             { //Up
-								y = newY - yOffset;
-							}
+                                y = newY - yOffset;
+                            }
                             else
                             { //Down
-								y = newY + yOffset;
-							}
+                                y = newY + yOffset;
+                            }
 
-							if (y < 0 || y >= yDim)
+                            if (y < 0 || y >= yDim)
                             {
-								break;
-							}
+                                break;
+                            }
 
-							if (pieces [horizontalPieces [i].X, y].IsColoured () && pieces [horizontalPieces [i].X, y].ColourComponent.Colour == colour)
+                            if (pieces[horizontalPieces[i].X, y].IsColoured() && pieces[horizontalPieces[i].X, y].ColourComponent.Colour == colour)
                             {
-								verticalPieces.Add (pieces [horizontalPieces [i].X, y]);
+                                verticalPieces.Add(pieces[horizontalPieces[i].X, y]);
                             }
                             else
                             {
-								break;
-							}
-						}
-					}
-
-					if (verticalPieces.Count < 2)
-                    {
-						verticalPieces.Clear ();
-					}
-                    else
-                    {
-						for (int j = 0; j < verticalPieces.Count; j++)
-                        {
-							matchingPieces.Add (verticalPieces [j]);
-                            //print("Is Movable");
-                            //Debug.Log(matchingPieces);
+                                break;
+                            }
                         }
+                    }
 
-						break;
-					}
-				}
-			}
-
-			if (matchingPieces.Count >= 3)
-            {
-				return matchingPieces;
-			}
-
-			//Didn't find anything going horizontally first,
-			//so now check vertically
-			horizontalPieces.Clear();
-			verticalPieces.Clear ();
-			verticalPieces.Add(piece);
-
-			for (int dir = 0; dir <= 1; dir++)
-            {
-				for (int yOffset = 1; yOffset < yDim; yOffset++)
-                {
-					int y;
-
-					if (dir == 0)
-                    { //Up
-						y = newY - yOffset;
-					}
-                    else
-                    { //Down
-						y = newY + yOffset;
-					}
-
-					if (y < 0 || y >= yDim)
+                    if (verticalPieces.Count < 2)
                     {
-						break;
-					}
-
-					if (pieces [newX, y].IsColoured () && pieces [newX, y].ColourComponent.Colour == colour)
-                    {
-						verticalPieces.Add (pieces [newX, y]);
+                        verticalPieces.Clear();
                     }
                     else
                     {
-						break;
-					}
-				}
-			}
-
-			if (verticalPieces.Count >= 3)
-            {
-				for (int i = 0; i < verticalPieces.Count; i++)
-                {
-					matchingPieces.Add (verticalPieces [i]);
-                    //print("Is Movable");
-                    //Debug.Log(matchingPieces);
-                }
-			}
-
-			//Traverse horizontally if we found a match (for L and T shapes)
-			if (verticalPieces.Count >= 3)
-            {
-				for (int i = 0; i < verticalPieces.Count; i++)
-                {
-					for (int dir = 0; dir <= 1; dir++)
-                    {
-						for (int xOffset = 1; xOffset < xDim; xOffset++)
+                        for (int j = 0; j < verticalPieces.Count; j++)
                         {
-							int x;
-
-							if (dir == 0)
-                            { //Left
-								x = newX - xOffset;
-							} else
-                            { //Right
-								x = newX + xOffset;
-							}
-
-							if (x < 0 || x >= xDim)
-                            {
-								break;
-							}
-
-							if (pieces [x, verticalPieces[i].Y].IsColoured () && pieces [x, verticalPieces[i].Y].ColourComponent.Colour == colour)
-                            {
-								horizontalPieces.Add (pieces [x, verticalPieces[i].Y]);
-							}
-                            else
-                            {
-								break;
-							}
-						}
-					}
-
-					if (horizontalPieces.Count < 2)
-                    {
-						horizontalPieces.Clear ();
-					}
-                    else
-                    {
-						for (int j = 0; j < horizontalPieces.Count; j++)
-                        {
-							matchingPieces.Add (horizontalPieces [j]);
-                            //print("Is Movable");
-                            //Debug.Log(matchingPieces);
+                            matchingPieces.Add(verticalPieces[j]);
                         }
 
-						break;
-					}
-				}
-			}
+                        break;
+                    }
+                }
+            }
 
-			if (matchingPieces.Count >= 3)
+            if (matchingPieces.Count >= 3)
             {
-				return matchingPieces;
-			}
-		}
+                return matchingPieces;
+            }
 
-		return null;
-	}
+            //Didn't find anything going horizontally first,
+            //so now check vertically
+            horizontalPieces.Clear();
+            verticalPieces.Clear();
+            verticalPieces.Add(piece);
 
-	public bool ClearAllValidMatches()
-	{
-		bool needsRefill = false;
-
-		for (int y = 0; y < yDim; y++)
-        {
-			for (int x = 0; x < xDim; x++)
+            for (int dir = 0; dir <= 1; dir++)
             {
-				if (pieces [x, y].IsClearable ())
+                for (int yOffset = 1; yOffset < yDim; yOffset++)
                 {
-					List<GamePiece> match = GetMatch (pieces [x, y], x, y);
+                    int y;
 
-					if (match != null)
+                    if (dir == 0)
+                    { //Up
+                        y = newY - yOffset;
+                    }
+                    else
+                    { //Down
+                        y = newY + yOffset;
+                    }
+
+                    if (y < 0 || y >= yDim)
                     {
-						PieceType specialPieceType = PieceType.COUNT;
-						GamePiece randomPiece = match [Random.Range (0, match.Count)];
-						int specialPieceX = randomPiece.X;
-						int specialPieceY = randomPiece.Y;
+                        break;
+                    }
 
-						if (match.Count == 4)
+                    if (pieces[newX, y].IsColoured() && pieces[newX, y].ColourComponent.Colour == colour)
+                    {
+                        verticalPieces.Add(pieces[newX, y]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (verticalPieces.Count >= 3)
+            {
+                for (int i = 0; i < verticalPieces.Count; i++)
+                {
+                    matchingPieces.Add(verticalPieces[i]);
+                    //Spawn a light in the corner of matching pieces
+                    GameObject matchLight = (GameObject)Instantiate(matchingLight, verticalPieces[i].transform.position, verticalPieces[i].transform.rotation);
+                }
+            }
+
+            //Traverse horizontally if we found a match (for L and T shapes)
+            if (verticalPieces.Count >= 3)
+            {
+                for (int i = 0; i < verticalPieces.Count; i++)
+                {
+                    for (int dir = 0; dir <= 1; dir++)
+                    {
+                        for (int xOffset = 1; xOffset < xDim; xOffset++)
                         {
-							if (pressedPiece == null || enteredPiece == null)
+                            int x;
+
+                            if (dir == 0)
+                            { //Left
+                                x = newX - xOffset;
+                            }
+                            else
+                            { //Right
+                                x = newX + xOffset;
+                            }
+
+                            if (x < 0 || x >= xDim)
                             {
-								specialPieceType = (PieceType)Random.Range ((int)PieceType.ROW_CLEAR, (int)PieceType.COLUMN_CLEAR);
-							}
-                            else if (pressedPiece.Y == enteredPiece.Y)
+                                break;
+                            }
+
+                            if (pieces[x, verticalPieces[i].Y].IsColoured() && pieces[x, verticalPieces[i].Y].ColourComponent.Colour == colour)
                             {
-								specialPieceType = PieceType.ROW_CLEAR;
-							}
+                                horizontalPieces.Add(pieces[x, verticalPieces[i].Y]);
+                            }
                             else
                             {
-								specialPieceType = PieceType.COLUMN_CLEAR;
-							}
-						}
+                                break;
+                            }
+                        }
+                    }
+
+                    if (horizontalPieces.Count < 2)
+                    {
+                        horizontalPieces.Clear();
+                    }
+                    else
+                    {
+                        for (int j = 0; j < horizontalPieces.Count; j++)
+                        {
+                            matchingPieces.Add(horizontalPieces[j]);
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            if (matchingPieces.Count >= 3)
+            {
+                return matchingPieces;
+            }
+        }
+
+        return null;
+    }
+
+    public bool ClearAllValidMatches()
+    {
+        bool needsRefill = false;
+
+        for (int y = 0; y < yDim; y++)
+        {
+            for (int x = 0; x < xDim; x++)
+            {
+                if (pieces[x, y].IsClearable())
+                {
+                    List<GamePiece> match = GetMatch(pieces[x, y], x, y);
+
+                    if (match != null)
+                    {
+                        PieceType specialPieceType = PieceType.COUNT;
+                        GamePiece randomPiece = match[Random.Range(0, match.Count)];
+                        int specialPieceX = randomPiece.X;
+                        int specialPieceY = randomPiece.Y;
+
+                        if (match.Count == 4)
+                        {
+                            if (pressedPiece == null || enteredPiece == null)
+                            {
+                                specialPieceType = (PieceType)Random.Range((int)PieceType.ROW_CLEAR, (int)PieceType.COLUMN_CLEAR);
+                            }
+                            else if (pressedPiece.Y == enteredPiece.Y)
+                            {
+                                specialPieceType = PieceType.ROW_CLEAR;
+                            }
+                            else
+                            {
+                                specialPieceType = PieceType.COLUMN_CLEAR;
+                            }
+                        }
                         else if (match.Count >= 5)
                         {
-							specialPieceType = PieceType.RAINBOW;
-						}
+                            specialPieceType = PieceType.RAINBOW;
+                        }
 
-						for (int i = 0; i < match.Count; i++)
+                        for (int i = 0; i < match.Count; i++)
                         {
-							if (ClearPiece (match [i].X, match [i].Y))
+                            if (ClearPiece(match[i].X, match[i].Y))
                             {
-								needsRefill = true;
+                                needsRefill = true;
 
-								if (match [i] == pressedPiece || match [i] == enteredPiece)
+                                if (match[i] == pressedPiece || match[i] == enteredPiece)
                                 {
-									specialPieceX = match [i].X;
-									specialPieceY = match [i].Y;
-								}
-							}
-						}
+                                    specialPieceX = match[i].X;
+                                    specialPieceY = match[i].Y;
+                                }
+                            }
+                        }
 
-						if (specialPieceType != PieceType.COUNT)
+                        if (specialPieceType != PieceType.COUNT)
                         {
-							Destroy (pieces [specialPieceX, specialPieceY]);
-							GamePiece newPiece = SpawnNewPiece (specialPieceX, specialPieceY, specialPieceType);
+                            Destroy(pieces[specialPieceX, specialPieceY]);
+                            GamePiece newPiece = SpawnNewPiece(specialPieceX, specialPieceY, specialPieceType);
 
-							if ((specialPieceType == PieceType.ROW_CLEAR || specialPieceType == PieceType.COLUMN_CLEAR)
-							    && newPiece.IsColoured () && match [0].IsColoured ())
+                            if ((specialPieceType == PieceType.ROW_CLEAR || specialPieceType == PieceType.COLUMN_CLEAR)
+                                && newPiece.IsColoured() && match[0].IsColoured())
                             {
-								newPiece.ColourComponent.SetColour (match [0].ColourComponent.Colour);
-							}
-                            else if (specialPieceType == PieceType.RAINBOW && newPiece.IsColoured ())
+                                newPiece.ColourComponent.SetColour(match[0].ColourComponent.Colour);
+                            }
+                            else if (specialPieceType == PieceType.RAINBOW && newPiece.IsColoured())
                             {
-								newPiece.ColourComponent.SetColour (ColourPiece.ColourType.ANY);
-							}
-						}
-					}
-				}
-			}
-		}
+                                newPiece.ColourComponent.SetColour(ColourPiece.ColourType.ANY);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-		return needsRefill;
-	}
+        return needsRefill;
+    }
 
-	public bool ClearPiece(int x, int y)
-	{
-		if (pieces [x, y].IsClearable () && !pieces [x, y].ClearableComponent.IsBeingCleared)
+    public bool ClearPiece(int x, int y)
+    {
+        if (pieces[x, y].IsClearable() && !pieces[x, y].ClearableComponent.IsBeingCleared)
         {
-			pieces [x, y].ClearableComponent.Clear ();
-			SpawnNewPiece (x, y, PieceType.EMPTY);
+            pieces[x, y].ClearableComponent.Clear();
+            SpawnNewPiece(x, y, PieceType.EMPTY);
 
-			ClearObstacles (x, y);
+            ClearObstacles(x, y);
 
-			return true;
-		}
+            return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	public void ClearObstacles(int x, int y)
-	{
-		for (int adjacentX = x - 1; adjacentX <= x + 1; adjacentX++)
+    public void ClearObstacles(int x, int y)
+    {
+        for (int adjacentX = x - 1; adjacentX <= x + 1; adjacentX++)
         {
-			if (adjacentX != x && adjacentX >= 0 && adjacentX < xDim)
+            if (adjacentX != x && adjacentX >= 0 && adjacentX < xDim)
             {
-				if (pieces [adjacentX, y].Type == PieceType.BUBBLE && pieces [adjacentX, y].IsClearable ())
+                if (pieces[adjacentX, y].Type == PieceType.BUBBLE && pieces[adjacentX, y].IsClearable())
                 {
-					pieces [adjacentX, y].ClearableComponent.Clear ();
-					SpawnNewPiece (adjacentX, y, PieceType.EMPTY);
-				}
-			}
-		}
+                    pieces[adjacentX, y].ClearableComponent.Clear();
+                    SpawnNewPiece(adjacentX, y, PieceType.EMPTY);
+                }
+            }
+        }
 
-		for (int adjacentY = y - 1; adjacentY <= y + 1; adjacentY++)
+        for (int adjacentY = y - 1; adjacentY <= y + 1; adjacentY++)
         {
-			if (adjacentY != y && adjacentY >= 0 && adjacentY < yDim)
+            if (adjacentY != y && adjacentY >= 0 && adjacentY < yDim)
             {
-				if (pieces [x, adjacentY].Type == PieceType.BUBBLE && pieces [x, adjacentY].IsClearable ())
+                if (pieces[x, adjacentY].Type == PieceType.BUBBLE && pieces[x, adjacentY].IsClearable())
                 {
-					pieces [x, adjacentY].ClearableComponent.Clear ();
-					SpawnNewPiece (x, adjacentY, PieceType.EMPTY);
-				}
-			}
-		}
-	}
+                    pieces[x, adjacentY].ClearableComponent.Clear();
+                    SpawnNewPiece(x, adjacentY, PieceType.EMPTY);
+                }
+            }
+        }
+    }
 
-	public void ClearRow(int row)
-	{
-		for (int x = 0; x < xDim; x++)
+    public void ClearRow(int row)
+    {
+        for (int x = 0; x < xDim; x++)
         {
-			ClearPiece (x, row);
-		}
-	}
+            ClearPiece(x, row);
+        }
+    }
 
-	public void ClearColumn(int column)
-	{
-		for (int y = 0; y < yDim; y++)
+    public void ClearColumn(int column)
+    {
+        for (int y = 0; y < yDim; y++)
         {
-			ClearPiece (column, y);
-		}
-	}
+            ClearPiece(column, y);
+        }
+    }
 
-	public void ClearColour(ColourPiece.ColourType colour)
-	{
-		for (int x = 0; x < xDim; x++)
+    public void ClearColour(ColourPiece.ColourType colour)
+    {
+        for (int x = 0; x < xDim; x++)
         {
-			for (int y = 0; y < yDim; y++)
+            for (int y = 0; y < yDim; y++)
             {
-				if (pieces [x, y].IsColoured () && (pieces [x, y].ColourComponent.Colour == colour
-				    || colour == ColourPiece.ColourType.ANY))
+                if (pieces[x, y].IsColoured() && (pieces[x, y].ColourComponent.Colour == colour
+                    || colour == ColourPiece.ColourType.ANY))
                 {
-					ClearPiece (x, y);
-				}
-			}
-		}
-	}
+                    ClearPiece(x, y);
+                }
+            }
+        }
+    }
 }
