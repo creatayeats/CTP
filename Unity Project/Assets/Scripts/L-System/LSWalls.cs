@@ -74,9 +74,9 @@ public class LSWalls : MonoBehaviour
     private void CoreLoop()
     {
         //Case which reads the current string
-        foreach (char c in rulesString)
+        foreach (char character in rulesString)
         {
-            switch (c)
+            switch (character)
             {
 
                 case 'f':
@@ -87,7 +87,6 @@ public class LSWalls : MonoBehaviour
                     PosTurn();
                     break;
                 case '-':
-                case '?':
                     NegTurn();
                     break;
                 default:
@@ -162,8 +161,6 @@ public class LSWalls : MonoBehaviour
         //Move spawner forward
         lineSpawner.transform.Translate(Vector3.up);
 
-        //boundaryCheck(clone);
-        //Boundary(clone);
         DestroyEnds(clone);
     }
 

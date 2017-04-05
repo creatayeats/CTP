@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 public class Grid : MonoBehaviour
 {
-
     public enum PieceType
     {
         EMPTY,
@@ -102,6 +101,7 @@ public class Grid : MonoBehaviour
 
         //Cast Vector2 floats to ints
         //Messy, is there a better option?
+        //Comment out Random Range number before uisng this
         int coord1X = (int)Mathf.Ceil(pNoise.coord1.x);
         int coord1Y = (int)Mathf.Ceil(pNoise.coord1.y);
         int coord2X = (int)Mathf.Ceil(pNoise.coord2.x);
@@ -113,6 +113,19 @@ public class Grid : MonoBehaviour
         int coord5X = (int)Mathf.Ceil(pNoise.coord5.x);
         int coord5Y = (int)Mathf.Ceil(pNoise.coord5.y);
 
+        //Random Range numbers for test purposes
+        //Comment out casting before using this
+        //int coord1X = Random.Range(0, xDim);
+        //int coord1Y = Random.Range(0, yDim);
+        //int coord2X = Random.Range(0, xDim);
+        //int coord2Y = Random.Range(0, yDim);
+        //int coord3X = Random.Range(0, xDim);
+        //int coord3Y = Random.Range(0, yDim);
+        //int coord4X = Random.Range(0, xDim);
+        //int coord4Y = Random.Range(0, yDim);
+        //int coord5X = Random.Range(0, xDim);
+        //int coord5Y = Random.Range(0, yDim);
+
         //Casting attempt
         Destroy(pieces[coord1X, coord1Y].gameObject);
         SpawnNewPiece(coord1X, coord1Y, PieceType.BUBBLE);
@@ -120,9 +133,8 @@ public class Grid : MonoBehaviour
         Destroy(pieces[coord2X, coord2Y].gameObject);
         SpawnNewPiece(coord2X, coord2Y, PieceType.BUBBLE);
 
-        //Spawn a rainbow piece for testing purposes
         Destroy(pieces[coord3X, coord3Y].gameObject);
-        SpawnNewPiece(coord3X, coord3Y, PieceType.RAINBOW);
+        SpawnNewPiece(coord3X, coord3Y, PieceType.BUBBLE);
 
         Destroy(pieces[coord4X, coord4Y].gameObject);
         SpawnNewPiece(coord4X, coord4Y, PieceType.BUBBLE);
@@ -131,8 +143,9 @@ public class Grid : MonoBehaviour
         SpawnNewPiece(coord5X, coord5Y, PieceType.BUBBLE);
 
         //Standard spawning procedure
-        //Destroy(pieces[7, 5].gameObject);
-        //SpawnNewPiece(7, 5, PieceType.BUBBLE);
+        //Test spawns a rainbow piece(CA)
+        Destroy(pieces[7, 5].gameObject);
+        SpawnNewPiece(7, 5, PieceType.RAINBOW);
 
         StartCoroutine(Fill());
     }
@@ -182,6 +195,7 @@ public class Grid : MonoBehaviour
         }
     }
 
+    //Game board refill loop
     public IEnumerator Fill()
     {
         bool needsRefill = true;
@@ -207,6 +221,7 @@ public class Grid : MonoBehaviour
         }
     }
 
+    //Game board refill procedure
     public bool FillStep()
     {
         bool movedPiece = false;
@@ -315,6 +330,7 @@ public class Grid : MonoBehaviour
         return new Vector2(transform.position.x - xDim / 2.0f + x, transform.position.y + yDim / 2.0f - y);
     }
 
+    //Creates new pieces from the dictionary of prefabs
     public GamePiece SpawnNewPiece(int x, int y, PieceType type)
     {
         GameObject newPiece = (GameObject)Instantiate(piecePrefabDict[type], GetWorldPosition(x, y), Quaternion.identity);
@@ -326,12 +342,13 @@ public class Grid : MonoBehaviour
         return pieces[x, y];
     }
 
+    //Are the pressed piece and last entered piece adjacent
     public bool IsAdjacent(GamePiece piece1, GamePiece piece2)
     {
         return (piece1.X == piece2.X && (int)Mathf.Abs(piece1.Y - piece2.Y) == 1) || (piece1.Y == piece2.Y && (int)Mathf.Abs(piece1.X - piece2.X) == 1);
     }
 
-    //Bredth dirst search on SPACE
+    //Breadth first search on SPACE
     public void SearchMatchesBredth()
     {
         {
@@ -396,6 +413,7 @@ public class Grid : MonoBehaviour
                 piece2.MovableComponent.Move(piece1X, piece1Y, fillTime);
                 movesMade++;
 
+                //If one of the pieces is a rainbow, clear in this function with set colour
                 if (piece1.Type == PieceType.RAINBOW && piece1.IsClearable() && piece2.IsColoured())
                 {
                     ClearColourPiece clearColour = piece1.GetComponent<ClearColourPiece>();
@@ -408,7 +426,7 @@ public class Grid : MonoBehaviour
                     ClearPiece(piece1.X, piece1.Y);
                     movesMade++;
                 }
-
+                
                 if (piece2.Type == PieceType.RAINBOW && piece2.IsClearable() && piece1.IsColoured())
                 {
                     ClearColourPiece clearColour = piece2.GetComponent<ClearColourPiece>();
@@ -424,6 +442,7 @@ public class Grid : MonoBehaviour
 
                 ClearAllValidMatches();
 
+                //If either pieces in the swap are special, clear in these functions
                 if (piece1.Type == PieceType.ROW_CLEAR || piece1.Type == PieceType.COLUMN_CLEAR)
                 {
                     ClearPiece(piece1.X, piece1.Y);
@@ -448,17 +467,17 @@ public class Grid : MonoBehaviour
             }
         }
     }
-
+    //Ref to piece on mouse click
     public void PressPiece(GamePiece piece)
     {
         pressedPiece = piece;
     }
-
+    //Ref to last game piece mouse is hovering over
     public void EnterPiece(GamePiece piece)
     {
         enteredPiece = piece;
     }
-
+    //Ref to releasing clicked game piece
     public void ReleasePiece()
     {
         if (IsAdjacent(pressedPiece, enteredPiece))
@@ -472,6 +491,7 @@ public class Grid : MonoBehaviour
         if (piece.IsColoured())
         {
             ColourPiece.ColourType colour = piece.ColourComponent.Colour;
+            //Lists for collating matches
             List<GamePiece> horizontalPieces = new List<GamePiece>();
             List<GamePiece> verticalPieces = new List<GamePiece>();
             List<GamePiece> matchingPieces = new List<GamePiece>();
@@ -498,7 +518,7 @@ public class Grid : MonoBehaviour
                     {
                         break;
                     }
-
+                    //If pieces match, add them to the list
                     if (pieces[x, newY].IsColoured() && pieces[x, newY].ColourComponent.Colour == colour)
                     {
                         horizontalPieces.Add(pieces[x, newY]);
@@ -512,6 +532,7 @@ public class Grid : MonoBehaviour
 
             if (horizontalPieces.Count >= 3)
             {
+                //Add the hroizontal matching pieces, to the list for all matching pieces
                 for (int i = 0; i < horizontalPieces.Count; i++)
                 {
                     matchingPieces.Add(horizontalPieces[i]);
@@ -544,7 +565,7 @@ public class Grid : MonoBehaviour
                             {
                                 break;
                             }
-
+                            //If pieces match, add them to the list
                             if (pieces[horizontalPieces[i].X, y].IsColoured() && pieces[horizontalPieces[i].X, y].ColourComponent.Colour == colour)
                             {
                                 verticalPieces.Add(pieces[horizontalPieces[i].X, y]);
@@ -555,13 +576,14 @@ public class Grid : MonoBehaviour
                             }
                         }
                     }
-
+                    //Clear the list if there is no match of 3 or over
                     if (verticalPieces.Count < 2)
                     {
                         verticalPieces.Clear();
                     }
                     else
                     {
+                        //Otherwise add pieces to matching list
                         for (int j = 0; j < verticalPieces.Count; j++)
                         {
                             matchingPieces.Add(verticalPieces[j]);
@@ -571,7 +593,7 @@ public class Grid : MonoBehaviour
                     }
                 }
             }
-
+         
             if (matchingPieces.Count >= 3)
             {
                 return matchingPieces;
@@ -602,7 +624,7 @@ public class Grid : MonoBehaviour
                     {
                         break;
                     }
-
+                    //If pieces match, add them to the list
                     if (pieces[newX, y].IsColoured() && pieces[newX, y].ColourComponent.Colour == colour)
                     {
                         verticalPieces.Add(pieces[newX, y]);
@@ -616,6 +638,7 @@ public class Grid : MonoBehaviour
 
             if (verticalPieces.Count >= 3)
             {
+                //Add the vertical matching pieces, to the list for all matching pieces
                 for (int i = 0; i < verticalPieces.Count; i++)
                 {
                     matchingPieces.Add(verticalPieces[i]);
@@ -648,7 +671,7 @@ public class Grid : MonoBehaviour
                             {
                                 break;
                             }
-
+                            //If pieces match, add them to the list
                             if (pieces[x, verticalPieces[i].Y].IsColoured() && pieces[x, verticalPieces[i].Y].ColourComponent.Colour == colour)
                             {
                                 horizontalPieces.Add(pieces[x, verticalPieces[i].Y]);
@@ -659,13 +682,14 @@ public class Grid : MonoBehaviour
                             }
                         }
                     }
-
+                    //Clear the list if there is no match of 3 or over
                     if (horizontalPieces.Count < 2)
                     {
                         horizontalPieces.Clear();
                     }
                     else
                     {
+                        //Otherwise add pieces to matching list
                         for (int j = 0; j < horizontalPieces.Count; j++)
                         {
                             matchingPieces.Add(horizontalPieces[j]);
@@ -704,26 +728,32 @@ public class Grid : MonoBehaviour
                         int specialPieceX = randomPiece.X;
                         int specialPieceY = randomPiece.Y;
 
+                        //If match 4, clear pieces and spawn special row or column clear pieces
+                        //Depending on the pressed piece movement makes the piece type
+                        //If that is unknown, randomly choose
                         if (match.Count == 4)
                         {
                             if (pressedPiece == null || enteredPiece == null)
                             {
                                 specialPieceType = (PieceType)Random.Range((int)PieceType.ROW_CLEAR, (int)PieceType.COLUMN_CLEAR);
                             }
+                            
                             else if (pressedPiece.Y == enteredPiece.Y)
                             {
                                 specialPieceType = PieceType.ROW_CLEAR;
                             }
+                           
                             else
                             {
                                 specialPieceType = PieceType.COLUMN_CLEAR;
                             }
                         }
+                        //If 5 match, spawn the rainbow piece
                         else if (match.Count >= 5)
                         {
                             specialPieceType = PieceType.RAINBOW;
                         }
-
+                        //Clear all the pieces in the list and refill the slots
                         for (int i = 0; i < match.Count; i++)
                         {
                             if (ClearPiece(match[i].X, match[i].Y))
@@ -760,23 +790,30 @@ public class Grid : MonoBehaviour
 
         return needsRefill;
     }
-
+    //Clears standard matching pieces
     public bool ClearPiece(int x, int y)
     {
+        //Removes the pieces if it is a clearable piece, and it isn't already being cleared
         if (pieces[x, y].IsClearable() && !pieces[x, y].ClearableComponent.IsBeingCleared)
         {
+            //Clear piece and create an empty slot
             pieces[x, y].ClearableComponent.Clear();
-            SpawnNewPiece(x, y, PieceType.EMPTY);
+            SpawnNewPiece(x, y, PieceType.EMPTY);          
 
             ClearObstacles(x, y);
 
             return true;
         }
         return false;
+        
     }
 
+    //This is used to destroy the bubble pieces, however the functionality has been turned off for testing
+    //To turn on, add the ClearablePiece Script to the BubblePiece prefab
+    //..and add the BubblePieceClear Animator
     public void ClearObstacles(int x, int y)
     {
+        //If the bubble is next to a clear on the X axis, clear
         for (int adjacentX = x - 1; adjacentX <= x + 1; adjacentX++)
         {
             if (adjacentX != x && adjacentX >= 0 && adjacentX < xDim)
@@ -788,7 +825,7 @@ public class Grid : MonoBehaviour
                 }
             }
         }
-
+        //If the bubble is next to a clear on the Y axis, clear
         for (int adjacentY = y - 1; adjacentY <= y + 1; adjacentY++)
         {
             if (adjacentY != y && adjacentY >= 0 && adjacentY < yDim)
@@ -801,7 +838,7 @@ public class Grid : MonoBehaviour
             }
         }
     }
-
+    //Clears all pieces in a row
     public void ClearRow(int row)
     {
         for (int x = 0; x < xDim; x++)
@@ -809,7 +846,7 @@ public class Grid : MonoBehaviour
             ClearPiece(x, row);
         }
     }
-
+    //Clears all pieces in a column
     public void ClearColumn(int column)
     {
         for (int y = 0; y < yDim; y++)
@@ -817,13 +854,16 @@ public class Grid : MonoBehaviour
             ClearPiece(column, y);
         }
     }
-
+    //Clears all pieces in a colour
+    //This is the core functionality for the Ceullular Automata
     public void ClearColour(ColourPiece.ColourType colour)
     {
         for (int x = 0; x < xDim; x++)
         {
             for (int y = 0; y < yDim; y++)
             {
+                //ColourType.ANY Represents the CA
+                //It clears colours it is swapped with
                 if (pieces[x, y].IsColoured() && (pieces[x, y].ColourComponent.Colour == colour
                     || colour == ColourPiece.ColourType.ANY))
                 {
