@@ -40,9 +40,10 @@ public class Grid : MonoBehaviour
     //Current game piece arrays
     private GamePiece[,] pieces;
 
-    //Perlin Noise script references
+    //System script references and variables
     private PNoiseColour pNoise;
     private GameObject pNoiseRef;
+    public bool isFilling;
 
     private bool inverse = false;
 
@@ -59,6 +60,7 @@ public class Grid : MonoBehaviour
     void Start()
     {
         //Instantiate search
+        isFilling = true;
         bredthFirst = false;
         bredthFirst = false;
         movesMade = 0;
@@ -147,6 +149,16 @@ public class Grid : MonoBehaviour
             depthFirst = true;
         }
 
+        //Wall collision debugging 
+        //if (Input.GetKeyDown(KeyCode.Backspace))
+        //{
+        //    isFilling = false;
+        //}
+        //if (Input.GetKeyDown(KeyCode.CapsLock))
+        //{
+        //    isFilling = true;
+        //}
+
         //Search all current matches trigger
         if (bredthFirst)
         {
@@ -182,8 +194,8 @@ public class Grid : MonoBehaviour
             {
                 inverse = !inverse;
                 yield return new WaitForSeconds(fillTime);
-            }
 
+            }
             needsRefill = ClearAllValidMatches();
         }
         //Refresh current valid search lights
@@ -295,7 +307,6 @@ public class Grid : MonoBehaviour
                 movedPiece = true;
             }
         }
-
         return movedPiece;
     }
 
@@ -383,6 +394,7 @@ public class Grid : MonoBehaviour
 
                 piece1.MovableComponent.Move(piece2.X, piece2.Y, fillTime);
                 piece2.MovableComponent.Move(piece1X, piece1Y, fillTime);
+                movesMade++;
 
                 if (piece1.Type == PieceType.RAINBOW && piece1.IsClearable() && piece2.IsColoured())
                 {
@@ -394,6 +406,7 @@ public class Grid : MonoBehaviour
                     }
 
                     ClearPiece(piece1.X, piece1.Y);
+                    movesMade++;
                 }
 
                 if (piece2.Type == PieceType.RAINBOW && piece2.IsClearable() && piece1.IsColoured())
@@ -406,6 +419,7 @@ public class Grid : MonoBehaviour
                     }
 
                     ClearPiece(piece2.X, piece2.Y);
+                    movesMade++;
                 }
 
                 ClearAllValidMatches();
@@ -413,11 +427,13 @@ public class Grid : MonoBehaviour
                 if (piece1.Type == PieceType.ROW_CLEAR || piece1.Type == PieceType.COLUMN_CLEAR)
                 {
                     ClearPiece(piece1.X, piece1.Y);
+                    movesMade++;
                 }
 
                 if (piece2.Type == PieceType.ROW_CLEAR || piece2.Type == PieceType.COLUMN_CLEAR)
                 {
                     ClearPiece(piece2.X, piece2.Y);
+                    movesMade++;
                 }
 
                 pressedPiece = null;
