@@ -142,8 +142,8 @@ public class Grid : MonoBehaviour
         Destroy(pieces[coord5X, coord5Y].gameObject);
         SpawnNewPiece(coord5X, coord5Y, PieceType.BUBBLE);
 
-        //Standard spawning procedure
-        //Test spawns a rainbow piece(CA)
+        ////Standard spawning procedure
+        ////Test spawns a rainbow piece(CA)
         Destroy(pieces[7, 5].gameObject);
         SpawnNewPiece(7, 5, PieceType.RAINBOW);
 
@@ -152,15 +152,23 @@ public class Grid : MonoBehaviour
 
     void Update()
     {
-        //Activate searches on SPACEBAR on NUMPAD ENTER key
+        //Activate search on SPACEBAR
         if (Input.GetKeyDown(KeyCode.Space))
         {
             bredthFirst = true;
         }
+        //..or on NUMPAD ENTER key
         if (Input.GetKeyDown(KeyCode.KeypadEnter))
         {
             depthFirst = true;
         }
+
+        //Comment out NUMPAD if NUMPAD is unavailable
+        //This uses BACKPACE for depth first instead
+        //if (Input.GetKeyDown(KeyCode.Backspace))
+        //{
+        //    depthFirst = true;
+        //}
 
         //Wall collision debugging 
         //if (Input.GetKeyDown(KeyCode.Backspace))
